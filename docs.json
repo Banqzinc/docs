@@ -53,16 +53,7 @@
           {
             "group": "API documentation",
             "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/openapi.json"
             ]
           }
         ]
@@ -72,12 +63,12 @@
       "anchors": [
         {
           "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "href": "https://docs.quidkey.com",
           "icon": "book-open-cover"
         },
         {
           "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
+          "href": "https://quidkey.com/blog",
           "icon": "newspaper"
         }
       ]
@@ -91,7 +82,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@quidkey.com"
       }
     ],
     "primary": {
@@ -114,9 +105,9 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/quidkeyHQ",
+      "github": "https://github.com/quidkey",
+      "linkedin": "https://linkedin.com/company/quidkey"
     }
   }
 }
