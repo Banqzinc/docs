@@ -6,9 +6,26 @@ icon: "code-merge"
 
 This guide explains how to add the Quidkey bank payment option next to your existing Stripe Payment Element. The customer sees a single payment section where exactly one method (Stripe **or** Quidkey) can be selected at a time.
 
+<Note>
+**New to Quidkey?** Start with the [Quickstart](/quickstart) to get your first payment working in 10 minutes, then return here for production-ready implementation.
+</Note>
+
+## Prerequisites
+
+Before you start, make sure you have:
+
+- [ ] Stripe Payment Element already integrated ✅
+- [ ] Server able to call external APIs (for Quidkey backend)
+- [ ] Quidkey `client_id` and `client_secret` ([contact us](mailto:rabea@quidkey.com) to get yours)
+- [ ] HTTPS enabled on your checkout page
+
 <Info>
-**Dynamic Updates**: Payment amounts and rewards can be updated after creation but before the customer initiates payment with their bank. This enables real-time adjustments for shipping costs, discounts, and promotional offers without requiring a new payment token.
+**No Stripe changes required** - Your existing Stripe integration stays exactly as it is.
 </Info>
+
+<Tip>
+**Estimated integration time:** 2-4 hours for production-ready setup including webhooks and error handling.
+</Tip>
 
 ## Integration Flow
 
@@ -49,6 +66,16 @@ sequenceDiagram
     end
     Quidkey-->>Backend: Webhook → update payment status + fees (if successful)
 ```
+
+## Try it First - No Setup Required
+
+<Card title="Interactive API Playground" icon="flask" href="/api-reference/embedded/create-payment-request">
+  Test creating a payment request in your browser before writing any code. Click "Send" to see a real response.
+</Card>
+
+<Info>
+You can test every API call in the [API Reference](/api-reference) tab using the interactive playgrounds. No authentication required for testing.
+</Info>
 
 ## Backend Changes
 

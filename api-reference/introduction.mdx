@@ -1,33 +1,151 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Reference'
+description: 'Technical overview of the Quidkey API'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URLs
 
-## Welcome
+Quidkey provides separate environments for development and production:
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+| Environment | Base URL | Purpose |
+|------------|----------|---------|
+| **Development** | `https://core-dev.quidkey.com` | Testing and integration development |
+| **Production** | `https://core.quidkey.com` | Live payments |
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+<Warning>
+Always use `test_transaction: true` in development to avoid processing real payments.
+</Warning>
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API endpoints require authentication using **OAuth 2.0 Client Credentials** flow.
 
-```json
-"security": [
-  {
-    "bearerAuth": []
+<Steps>
+<Step title="Obtain credentials">
+  Contact [rabea@quidkey.com](mailto:rabea@quidkey.com) to receive your `client_id` and `client_secret`
+</Step>
+
+<Step title="Exchange for access token">
+  Call `POST /api/v1/oauth2/token` with your credentials to receive an `access_token`
+</Step>
+
+<Step title="Use in requests">
+  Include the token in all API requests: `Authorization: Bearer <access_token>`
+</Step>
+</Steps>
+
+**Token Lifecycle:**
+- **Validity:** 15 minutes (900 seconds)
+- **Refresh:** Use `POST /api/v1/oauth2/refresh` with your `refresh_token`
+- **Best practice:** Cache tokens and refresh before expiry
+
+<Card title="Try Authentication" icon="key" href="/api-reference/auth/issue-a-new-access-token">
+  Test the authentication flow in the interactive playground
+</Card>
+
+## API Endpoints
+
+The Quidkey API is organized into logical groups:
+
+<CardGroup cols={2}>
+<Card title="Authentication" icon="key" href="/api-reference/auth/issue-a-new-access-token">
+  Obtain and refresh access tokens
+</Card>
+
+<Card title="Embedded Payment Flow" icon="credit-card" href="/api-reference/embedded/create-payment-request">
+  Create, update, and initiate payments
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/api-reference/webhooks/register-webhook">
+  Configure webhook endpoints and secrets
+</Card>
+</CardGroup>
+
+## Common Response Format
+
+All Quidkey API responses follow a consistent structure:
+
+```json Success Response
+{
+  "success": true,
+  "data": {
+    // Response data here
   }
-]
+}
 ```
+
+```json Error Response
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Human-readable error message",
+    "errors": [ // Optional - for validation errors
+      {
+        "field": "amount",
+        "message": "Amount must be greater than 0"
+      }
+    ]
+  }
+}
+```
+
+## HTTP Status Codes
+
+| Status Code | Description | Common Scenarios |
+|-------------|-------------|------------------|
+| `200` | Success | Request processed successfully |
+| `201` | Created | Resource created successfully |
+| `400` | Bad Request | Validation error or malformed request |
+| `401` | Unauthorized | Missing or invalid authentication |
+| `403` | Forbidden | Valid auth but insufficient permissions |
+| `404` | Not Found | Resource doesn't exist |
+| `500` | Internal Server Error | Server-side issue (rare) |
+
+## Error Codes
+
+Common error codes you may encounter:
+
+| Code | Description | Resolution |
+|------|-------------|------------|
+| `INVALID_INPUT` | Request validation failed | Check the `errors` array for field-specific issues |
+| `UNAUTHORIZED` | Invalid or expired token | Refresh your access token |
+| `MERCHANT_NOT_FOUND` | Invalid merchant ID | Verify your credentials |
+| `PAYMENT_REQUEST_NOT_FOUND` | Invalid payment token | Check token hasn't expired (15 min TTL) |
+| `PAYMENT_ALREADY_INITIATED` | Payment already in progress | Cannot update amount after customer selects bank |
+
+<Tip>
+All error responses include a human-readable `message` field. Use `code` for programmatic handling, `message` for logging/debugging.
+</Tip>
+
+## Rate Limits
+
+<Info>
+Quidkey currently does not enforce strict rate limits. However, we recommend implementing exponential backoff for retry logic and avoiding unnecessary API calls.
+</Info>
+
+## API Versioning
+
+The current API version is **v1**, indicated in all endpoint paths: `/api/v1/...`
+
+- **Breaking changes:** Will be released as new versions (v2, v3, etc.)
+- **Non-breaking changes:** Added to existing version without path changes
+- **Deprecation:** Minimum 6 months notice before removing endpoints
+
+## Getting Started
+
+<CardGroup cols={2}>
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Get your first payment working in 10 minutes
+</Card>
+
+<Card title="Integration Guide" icon="code" href="/guides/embedded-with-stripe">
+  Complete production-ready integration
+</Card>
+</CardGroup>
+
+## Need Help?
+
+<Card title="Contact Support" icon="headset" href="mailto:rabea@quidkey.com">
+  Email rabea@quidkey.com - we typically respond within one business day
+</Card>
