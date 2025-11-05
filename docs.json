@@ -4,8 +4,8 @@
   "name": "Quidkey Docs",
   "colors": {
     "primary": "#3A81FF",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "light": "#9DC0FF",
+    "dark": "#CEDFFF"
   },
   "favicon": "https://storage.googleapis.com/quidkey-resources-public/quidkey-logo-fav.png",
   "api": {
@@ -17,11 +17,6 @@
   "navigation": {
     "global": {
       "anchors": [
-        {
-          "anchor": "Documentation",
-          "icon": "book-open-cover",
-          "href": "https://docs.quidkey.com"
-        },
         {
           "anchor": "Blog",
           "icon": "newspaper",
@@ -100,8 +95,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Get Started",
+      "href": "merchants.quidkey.com"
     }
   },
   "contextual": {
