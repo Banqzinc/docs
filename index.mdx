@@ -49,22 +49,22 @@ Quidkey enables merchants to accept **bank-to-bank payments** directly in their 
 </CardGroup>
 
 <Note>
-Quidkey works alongside Stripe - customers choose their preferred payment method at checkout. Payment amounts and rewards can be updated dynamically for shipping costs, discounts, and promotional offers.
+Quidkey works alongside Stripe - customers can choose between card payments or bank transfers. Quidkey automatically predicts and pre-selects the customer's bank, so they pay with their trusted bank brand. Payment amounts and rewards can be updated dynamically for shipping costs, discounts, and promotional offers.
 </Note>
 
 ## How It Works
 
 <Steps>
-<Step title="Customer chooses Quidkey">
-  At checkout, customers see Quidkey as a payment option alongside credit cards
+<Step title="Quidkey predicts customer's bank">
+  Quidkey automatically predicts and pre-selects the customer's bank
 </Step>
 
-<Step title="Select their bank">
-  Customer picks their bank from a list (or we predict it for them)
+<Step title="Customer pays with their bank">
+  Customer sees their trusted bank pre-selected and ready to pay
 </Step>
 
 <Step title="Authenticate & approve">
-  Customer logs into their bank and authorizes the payment securely
+  Customer is redirected into their bank to authorizes the payment securely
 </Step>
 
 <Step title="Payment complete">
@@ -73,7 +73,7 @@ Quidkey works alongside Stripe - customers choose their preferred payment method
 </Steps>
 
 <Info>
-Quidkey uses **Open Banking** technology - the same secure infrastructure powering millions of transactions across Europe and beyond.
+Quidkey connects to multiple Open Banking providers (TPPs) and bank integration partners. We automatically select the best connection for each transaction to ensure high success rates and a smooth payment experience.
 </Info>
 
 ## Get Started
@@ -107,8 +107,10 @@ Quidkey uses **Open Banking** technology - the same secure infrastructure poweri
   Ideal for transactions over €50 where card fees become significant. Common in travel, luxury goods, and B2B payments.
 </Accordion>
 
-<Accordion title="European Markets" icon="earth-europe">
-  Native support for SEPA, Faster Payments, Multibanco, and other European payment schemes. Expanding to more markets continuously.
+<Accordion title="Global Markets" icon="earth-europe">
+  Quidkey currently supports account to account payments in the EU and UK, with the US available in Closed Beta.
+Support for Australia and Canada is coming soon.
+We are actively expanding our connectivity to more markets and banking networks.
 </Accordion>
 
 <Accordion title="Chargeback-Sensitive Industries" icon="shield-halved">
