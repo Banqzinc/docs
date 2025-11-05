@@ -61,7 +61,7 @@
             "group": "Authentication",
             "openapi": "api-reference/openapi.json",
             "pages": [
-              "POST /api/v1/oauth2/token",
+              "api-reference/endpoint/issue-token",
               "POST /api/v1/oauth2/refresh"
             ]
           },
