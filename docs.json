@@ -4,8 +4,8 @@
   "name": "Quidkey Docs",
   "colors": {
     "primary": "#3A81FF",
-    "light": "#9DC0FF",
-    "dark": "#CEDFFF"
+    "light": "#CEDFFF",
+    "dark": "#3A81FF"
   },
   "favicon": "https://storage.googleapis.com/quidkey-resources-public/quidkey-logo-fav.png",
   "api": {
