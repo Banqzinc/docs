@@ -16,7 +16,7 @@ Before you start, make sure you have:
 
 - [ ] Stripe Payment Element already integrated ✅
 - [ ] Server able to call external APIs (for Quidkey backend)
-- [ ] Quidkey `client_id` and `client_secret` ([contact us](mailto:rabea@quidkey.com) to get yours)
+- [ ] Quidkey `client_id` and `client_secret` (sign up at [merchants.quidkey.com](https://merchants.quidkey.com) to get yours)
 - [ ] HTTPS enabled on your checkout page
 
 <Info>
@@ -69,7 +69,7 @@ sequenceDiagram
 
 ## Try it First - No Setup Required
 
-<Card title="Interactive API Playground" icon="flask" href="/api-reference/embedded/create-payment-request">
+<Card title="Interactive API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
   Test creating a payment request in your browser before writing any code. Click "Send" to see a real response.
 </Card>
 
@@ -214,7 +214,7 @@ const { payment_token, expires_in } = await response.json();
 </CodeGroup>
 
 <Info>
-You'll receive a `payment_token` (valid for 15 minutes) to embed in your iframe. See the [Create Payment Request API](/api-reference/embedded/create-payment-request) for the complete specification and response schema.
+You'll receive a `payment_token` (valid for 15 minutes) to embed in your iframe. See the [Create Payment Request API](/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow) for the complete specification and response schema.
 </Info>
 
 <AccordionGroup>
@@ -523,17 +523,6 @@ A complete, working implementation is maintained in an open-source repository. I
 </Card>
 
 </CardGroup>
-
-**Key files to explore:**
-
-- **[checkout.html](https://github.com/Banqzinc/stripe-sample-code/blob/main/public/checkout.html)** – Hosts the Stripe Payment Element and embeds the Quidkey iframe
-- **[client.js](https://github.com/Banqzinc/stripe-sample-code/blob/main/src/client.js)** – Obtains bearer token, creates payment request, initiates payment
-- **[paymentInitiation.js](https://github.com/Banqzinc/stripe-sample-code/blob/main/src/controllers/paymentInitiation.js)** – Express route that calls Quidkey's payment initiation endpoint
-- **[createCheckoutSession.js](https://github.com/Banqzinc/stripe-sample-code/blob/main/src/controllers/createCheckoutSession.js)** – Creates Stripe PaymentIntent and returns both `clientSecret` and `payment_token`
-
-<Check>
-Copy-pasting is intentionally omitted here – refer to the repository above so you always get the latest, tested version.
-</Check>
 
 ## Webhook Delivery
 
