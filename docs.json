@@ -96,7 +96,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "merchants.quidkey.com"
+      "href": "https://merchants.quidkey.com"
     }
   },
   "contextual": {
