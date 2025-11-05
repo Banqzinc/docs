@@ -95,8 +95,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Get Started",
+      "href": "merchants.quidkey.com"
     }
   },
   "contextual": {
