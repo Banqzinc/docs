@@ -37,49 +37,51 @@
             "group": "Getting started",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Integration",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/embedded-with-stripe"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
-            "group": "Endpoint examples",
-            "openapi": "api-reference/openapi.json"
-
+            "group": "Authentication",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "POST /api/v1/oauth2/token",
+              "POST /api/v1/oauth2/refresh"
+            ]
+          },
+          {
+            "group": "Embedded Payment Flow",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "POST /api/v1/embedded/payment-requests",
+              "PATCH /api/v1/embedded/payment-requests",
+              "POST /api/v1/embedded/payment-initiation"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "POST /api/v1/webhooks",
+              "POST /api/v1/webhooks/secret",
+              "POST /api/v1/webhooks/secret/revoke"
+            ]
           }
         ]
       }
