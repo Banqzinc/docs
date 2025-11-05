@@ -1,0 +1,60 @@
+---
+title: "Issue a new access token"
+openapi: "POST /api/v1/oauth2/token"
+---
+
+Exchange your `client_id` and `client_secret` for an access token. The token is valid for 15 minutes and must be included in the `Authorization: Bearer <token>` header of all subsequent API requests.
+
+<RequestExample>
+
+```bash cURL
+curl -X POST 'https://core-dev.quidkey.com/api/v1/oauth2/token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_id": "cbad8f7d-41f5-463d-967c-ca825eb65953",
+    "client_secret": "98c787a7b57a881e469e64579be9823a302185213de0d3835a766f1e3907982f"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core-dev.quidkey.com/api/v1/oauth2/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    client_id: 'cbad8f7d-41f5-463d-967c-ca825eb65953',
+    client_secret: '98c787a7b57a881e469e64579be9823a302185213de0d3835a766f1e3907982f'
+  })
+});
+
+const { access_token, refresh_token, expires_in } = await response.json();
+console.log('Access token:', access_token);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://core-dev.quidkey.com/api/v1/oauth2/token',
+    json={
+        'client_id': 'cbad8f7d-41f5-463d-967c-ca825eb65953',
+        'client_secret': '98c787a7b57a881e469e64579be9823a302185213de0d3835a766f1e3907982f'
+    }
+)
+
+data = response.json()
+access_token = data['data']['access_token']
+print(f'Access token: {access_token}')
+```
+
+</RequestExample>
+
+<Tip>
+**Token Lifecycle:**
+- **Validity:** 15 minutes (900 seconds)
+- **Refresh:** Use the `refresh_token` to get a new `access_token` without re-authenticating
+- **Best practice:** Cache tokens and refresh before expiry
+</Tip>
+
+<Note>
+Don't have credentials yet? Sign up at [merchants.quidkey.com](https://merchants.quidkey.com) to get your `client_id` and `client_secret` for development and production environments.
+</Note>

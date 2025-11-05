@@ -1,97 +1,125 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Quidkey Documentation"
+description: "Accept bank payments with lower fees and zero chargeback risk"
 ---
 
-## Setting up
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.png"
+  alt="Quidkey Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.png"
+  alt="Quidkey Hero Dark"
+/>
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
+<Card title="Start building" icon="rocket" href="/quickstart" size="lg">
+  Get your first Quidkey payment working in 10 minutes
 </Card>
 
-## Make it yours
+## Welcome to Quidkey
 
-Design a docs site that looks great and empowers your users.
+Quidkey enables merchants to accept **bank-to-bank payments** directly in their checkout, reducing payment costs and eliminating chargeback risk. Integrate once and offer customers a seamless alternative to card payments.
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+## Why Use Quidkey?
 
-## Create beautiful pages
+<CardGroup cols={3}>
+<Card title="Lower Fees" icon="chart-line-down">
+  Significantly reduce payment processing costs compared to card payments - typically 70-80% savings
+</Card>
 
-Everything you need to create world-class documentation.
+<Card title="No Chargebacks" icon="shield-check">
+  Bank transfers are final - eliminate chargeback risk and fraud disputes entirely
+</Card>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+<Card title="Seamless UX" icon="sparkles">
+  Embedded directly in your checkout - customers never leave your site
+</Card>
+</CardGroup>
 
-## Need inspiration?
+<CardGroup cols={3}>
+<Card title="Instant Settlement" icon="bolt">
+  Funds settle faster than card payments with real-time payment schemes
+</Card>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
+<Card title="Works with Stripe" icon="code-merge">
+  Add alongside your existing Stripe integration - no changes to Stripe code required
+</Card>
+
+<Card title="Multiple Markets" icon="globe">
+  Support SEPA, Faster Payments, Multibanco, and more payment schemes automatically
+</Card>
+</CardGroup>
+
+<Note>
+Quidkey works alongside Stripe - customers can choose between card payments or bank transfers. Quidkey automatically predicts and pre-selects the customer's bank, so they pay with their trusted bank brand. Payment amounts and rewards can be updated dynamically for shipping costs, discounts, and promotional offers.
+</Note>
+
+## How It Works
+
+<Steps>
+<Step title="Quidkey predicts customer's bank">
+  Quidkey automatically predicts and pre-selects the customer's bank
+</Step>
+
+<Step title="Customer pays with their bank">
+  Customer sees their trusted bank pre-selected and ready to pay
+</Step>
+
+<Step title="Authenticate & approve">
+  Customer is redirected into their bank to authorizes the payment securely
+</Step>
+
+<Step title="Payment complete">
+  Funds transfer directly to your account - you receive a webhook with payment confirmation
+</Step>
+</Steps>
+
+<Info>
+Quidkey connects to multiple Open Banking providers (TPPs) and bank integration partners. We automatically select the best connection for each transaction to ensure high success rates and a smooth payment experience.
+</Info>
+
+## Get Started
+
+<CardGroup cols={2}>
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get your first payment working in 10 minutes with our quickstart guide
+</Card>
+
+<Card title="Integration Guide" icon="code" href="/guides/embedded-with-stripe">
+  Complete production-ready integration with Stripe Payment Element
+</Card>
+
+<Card title="API Reference" icon="terminal" href="/api-reference/introduction">
+  Explore all endpoints with interactive API playgrounds
+</Card>
+
+<Card title="Live Demo" icon="browser" href="https://embedded.quidkey.com">
+  Try the full integration with test credentials
+</Card>
+</CardGroup>
+
+## When to Use Quidkey
+
+<AccordionGroup>
+<Accordion title="E-commerce & Marketplaces" icon="shopping-cart">
+  Perfect for online stores, marketplaces, and subscription services. Reduce transaction fees while maintaining seamless checkout experience.
+</Accordion>
+
+<Accordion title="High-Value Transactions" icon="sack-dollar">
+  Ideal for transactions over €50 where card fees become significant. Common in travel, luxury goods, and B2B payments.
+</Accordion>
+
+<Accordion title="Global Markets" icon="earth-europe">
+  Quidkey currently supports account to account payments in the EU and UK, with the US available in Closed Beta.
+Support for Australia and Canada is coming soon.
+We are actively expanding our connectivity to more markets and banking networks.
+</Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+<Card title="Contact Support" icon="headset" href="mailto:rabea@quidkey.com">
+  Questions? Email us at rabea@quidkey.com - we typically respond within one business day
 </Card>

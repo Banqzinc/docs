@@ -1,80 +1,302 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get your first Quidkey payment working in 10 minutes"
+icon: "rocket"
 ---
 
-## Get started in three steps
+Get a payment working in your development environment. This guide gets you to success quickly - for production setup, see the [complete integration guide](/guides/embedded-with-stripe).
 
-Get your documentation site running locally and make your first customization.
+## What You'll Build
 
-### Step 1: Set up your local environment
+By the end of this quickstart, you'll have:
+- Authenticated with Quidkey's API
+- Created a payment request
+- Rendered the Quidkey checkout iframe
+- Processed a test payment
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Info>
+**Time to complete:** 2-4 hours
+**Prerequisite:** Sign up at [merchants.quidkey.com](https://merchants.quidkey.com) to get your `client_id` and `client_secret`
+</Info>
 
-### Step 2: Deploy your changes
+## Integration Overview
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Steps>
+<Step title="Backend: Create payment token">
+  `POST /oauth2/token` → get `access_token`
+  `POST /embedded/payment-requests` → get `payment_token`
+</Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Step title="Frontend: Render iframe">
+  Embed iframe with `?payment_token=...`
+  Quidkey predicts and pre-selects the customer's bank automatically
+  Listen for `postMessage` events from iframe
+</Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Step title="On Purchase: Initiate payment">
+  `POST /payment-initiations` → redirect customer to their bank
+  Customer pays with their trusted bank, not Quidkey
+</Step>
+</Steps>
 
-### Step 3: Go live
+---
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+## Step 1: Authenticate
 
-## Next steps
+Get an access token using your credentials.
 
-Now that you have your docs running, explore these key features:
+<CodeGroup>
 
-<CardGroup cols={2}>
+```bash cURL
+curl -X POST 'https://core-dev.quidkey.com/api/v1/oauth2/token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_id": "your-client-id",
+    "client_secret": "your-client-secret"
+  }'
+```
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+```javascript Node.js
+const response = await fetch('https://core-dev.quidkey.com/api/v1/oauth2/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    client_id: 'your-client-id',
+    client_secret: 'your-client-secret'
+  })
+});
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+const { access_token } = await response.json();
+console.log('Access token:', access_token);
+```
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+```python Python
+import requests
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+response = requests.post(
+    'https://core-dev.quidkey.com/api/v1/oauth2/token',
+    json={
+        'client_id': 'your-client-id',
+        'client_secret': 'your-client-secret'
+    }
+)
 
-</CardGroup>
+access_token = response.json()['data']['access_token']
+print(f'Access token: {access_token}')
+```
+
+</CodeGroup>
+
+<Check>
+You should receive an `access_token` valid for 15 minutes. Save this for the next step.
+</Check>
+
+<Tip>
+Don't have credentials yet? [Try it in the API playground](/api-reference/endpoint/issue-token) first - no authentication required for testing!
+</Tip>
+
+---
+
+## Step 2: Create a Payment Request
+
+Use your access token to create a payment request.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://core-dev.quidkey.com/api/v1/embedded/payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "customer": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+4917646793347",
+      "country": "DE"
+    },
+    "order": {
+      "order_id": "test-order-001",
+      "amount": 1000,
+      "currency": "EUR",
+      "payment_reference": "Test Payment",
+      "locale": "en-GB",
+      "test_transaction": true
+    },
+    "redirect_urls": {
+      "success_url": "https://yoursite.com/success",
+      "failure_url": "https://yoursite.com/failure"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core-dev.quidkey.com/api/v1/embedded/payment-requests', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${access_token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    customer: {
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+4917646793347',
+      country: 'DE'
+    },
+    order: {
+      order_id: 'test-order-001',
+      amount: 1000, // €10.00 in cents
+      currency: 'EUR',
+      payment_reference: 'Test Payment',
+      locale: 'en-GB',
+      test_transaction: true
+    },
+    redirect_urls: {
+      success_url: 'https://yoursite.com/success',
+      failure_url: 'https://yoursite.com/failure'
+    }
+  })
+});
+
+const { payment_token } = await response.json();
+console.log('Payment token:', payment_token);
+```
+
+</CodeGroup>
+
+<Check>
+You should receive a `payment_token` - save this for embedding in the iframe.
+</Check>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+**Amount format:** Use cents (minor units). `1000` = €10.00. Same format as Stripe!
 </Note>
+
+---
+
+## Step 3: Embed the Checkout
+
+Add the Quidkey iframe to your checkout page using the `payment_token` from Step 2. Quidkey will automatically predict and pre-select the customer's bank based on their information, so they can pay with their trusted bank brand.
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quidkey Test Checkout</title>
+  <style>
+    .quidkey-container {
+      width: 100%;
+      max-width: 500px;
+      margin: 50px auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="quidkey-container">
+    <h1>Test Payment - €10.00</h1>
+
+    <iframe
+      id="quidkey-iframe"
+      src="https://core-dev.quidkey.com/api/v1/embedded?payment_token=YOUR_PAYMENT_TOKEN"
+      style="width:100%;height:108px;border:0;"
+      title="Quidkey checkout"
+    ></iframe>
+
+    <button id="pay-button" disabled>Pay €10.00</button>
+  </div>
+
+  <script>
+    let selectedBankId = null;
+
+    // Listen for bank selection from iframe
+    // Quidkey predicts and pre-selects the customer's bank automatically
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'quidkey-state-update') {
+        selectedBankId = event.data.selectedBankId;
+
+        // Enable button when bank is pre-selected or selected
+        document.getElementById('pay-button').disabled = !selectedBankId;
+      }
+    });
+
+    // Handle payment initiation
+    document.getElementById('pay-button').addEventListener('click', async () => {
+      // Call your backend to initiate payment
+      const response = await fetch('/api/quidkey/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bankId: selectedBankId,
+          paymentToken: 'YOUR_PAYMENT_TOKEN'
+        })
+      });
+
+      const { payment_link } = await response.json();
+      window.location.href = payment_link; // Redirect to bank
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Step 4: Test with Demo Bank
+
+<Steps>
+<Step title="Open your checkout page">
+  Load the HTML file in your browser. Quidkey will automatically predict and pre-select a bank for test mode.
+</Step>
+
+<Step title="Bank pre-selected">
+  The demo bank should already be selected (or you can select it if needed). The Pay button should be enabled.
+</Step>
+
+<Step title="Complete payment">
+  Click Pay, authenticate with any credentials (it's demo), and you'll be redirected to your success URL.
+</Step>
+
+<Step title="Verify success">
+  Check your webhook endpoint (if configured) for the payment confirmation.
+</Step>
+</Steps>
+
+<Check>
+**Success!** You've processed your first Quidkey payment! 🎉
+</Check>
+
+---
+
+## Next Steps
+
+Now that you have a working payment, take it to production:
+
+<CardGroup cols={2}>
+<Card title="Full Integration Guide" icon="code" href="/guides/embedded-with-stripe">
+  Production-ready integration with Stripe, webhooks, error handling, and more
+</Card>
+
+<Card title="API Reference" icon="book" href="/api-reference/introduction">
+  Explore all endpoints with interactive playgrounds
+</Card>
+
+<Card title="Webhook Setup" icon="webhook" href="/guides/embedded-with-stripe#webhook-delivery">
+  Configure webhooks to receive payment status updates
+</Card>
+
+<Card title="Production Checklist" icon="list-check" href="/guides/embedded-with-stripe#qa-checklist-before-going-live">
+  Everything you need to verify before going live
+</Card>
+</CardGroup>
+
+## Need Credentials?
+
+<Warning>
+Sign up at [merchants.quidkey.com](https://merchants.quidkey.com) to get your `client_id` and `client_secret` for development and production environments.
+</Warning>
+
+## Support
+
+Questions? We're here to help:
+- 📧 Email: [rabea@quidkey.com](mailto:rabea@quidkey.com)
+- 💬 Response time: Typically within one business day
