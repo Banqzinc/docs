@@ -7,7 +7,7 @@
     "light": "#07C983",
     "dark": "#15803D"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://storage.googleapis.com/quidkey-resources-public/quidkey-logo-fav.png",
   "api": {
     "playground": {
       "display": "interactive",
