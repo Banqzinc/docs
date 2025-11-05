@@ -7,8 +7,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5679",
-      "description": "development server"
+      "url": "https://core-dev.quidkey.com",
+      "description": "Development"
+    },
+    {
+      "url": "https://core.quidkey.com",
+      "description": "Production"
     }
   ],
   "components": {
