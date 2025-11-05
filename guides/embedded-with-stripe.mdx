@@ -1,14 +1,10 @@
 ---
 title: "Embedded Flow with Stripe"
-description: "Add Quidkey open banking payments alongside your existing Stripe integration"
+description: "Add Quidkey checkout alongside your existing Stripe integration"
 icon: "code-merge"
 ---
 
-This guide explains how to add the Quidkey open-banking option next to your existing Stripe Payment Element. The customer sees a single payment section where exactly one method (Stripe **or** Quidkey) can be selected at a time.
-
-<Note>
-**Fee Processing**: For successful transactions, Quidkey calculates fees automatically and includes detailed fee information in webhook payloads for merchant accounting, billing reconciliation, and cost tracking. Fees are processed in merchant backend systems only and are not displayed to customers.
-</Note>
+This guide explains how to add the Quidkey bank payment option next to your existing Stripe Payment Element. The customer sees a single payment section where exactly one method (Stripe **or** Quidkey) can be selected at a time.
 
 <Info>
 **Dynamic Updates**: Payment amounts and rewards can be updated after creation but before the customer initiates payment with their bank. This enables real-time adjustments for shipping costs, discounts, and promotional offers without requiring a new payment token.
@@ -495,12 +491,8 @@ A complete, working implementation is maintained in an open-source repository. I
 
 <CardGroup cols={2}>
 
-<Card title="Live Demo" icon="browser" href="https://stripe-335796202879.europe-west1.run.app/">
+<Card title="Live Demo" icon="browser" href="https://embedded.quidkey.com">
   Try the integration in action with test credentials
-</Card>
-
-<Card title="Source Code" icon="github" href="https://github.com/Banqzinc/stripe-sample-code">
-  Complete implementation with Stripe + Quidkey
 </Card>
 
 </CardGroup>
@@ -713,19 +705,6 @@ Quidkey automatically calculates and applies fees for successful transactions. F
 - **Percentage fees**: Based on transaction amount (e.g., 1.5% of €100 = €1.50)
 - **Fixed fees**: Flat rate per transaction (e.g., €1.00 per transaction)
 - **Currency-specific**: Fees are calculated in the same currency as the transaction
-
-### When Fees Are Applied
-
-| Transaction Status | Fee Calculation | Webhook Includes Fees |
-|-------------------|-----------------|----------------------|
-| `succeeded` | ✅ Calculated | ✅ Yes |
-| `failed` | ❌ No fees | ❌ No |
-| `cancelled` | ❌ No fees | ❌ No |
-| `pending` | ⏳ Not yet | ❌ No |
-
-<Check>
-Fees are only calculated and charged for successful payments where money has actually been transferred.
-</Check>
 
 ### Fee Breakdown Structure
 
