@@ -1,14 +1,14 @@
 ---
 title: "Embed the Checkout"
-description: "Add the bank selection iframe to your checkout page"
+description: "Add the bank selection iframe alongside Stripe and wire up mutual exclusion"
 icon: "browser"
 ---
 
-After [creating a payment request](/guides/embedded-flow/create), embed the Quidkey bank selection iframe on your checkout page. Customers select their bank, and you initiate the payment when they click your purchase button.
+After [creating a payment request](/guides/embedded-flow/create), embed the Quidkey bank selection iframe on your checkout page alongside your existing Stripe Payment Element. Customers choose between Stripe or Quidkey, and you route the payment based on their selection.
 
 ## Add the Iframe
 
-Add the iframe using the `payment_token` from the create step. If the API call fails, keep your page in its default state (e.g., Stripe-only).
+Add the iframe using the `payment_token` from the create step. Place it near your Stripe Payment Element so customers see both options. If the Quidkey API call fails, keep your page in its default Stripe-only state.
 
 ```html
 <iframe
@@ -21,6 +21,10 @@ Add the iframe using the `payment_token` from the create step. If the API call f
 ```
 
 Quidkey will automatically predict and pre-select the customer's bank based on their country and information.
+
+### Stripe PaymentIntent
+
+Your existing PaymentIntent creation stays exactly as it is. As long as you already render a single Stripe Payment Element, no backend changes are required.
 
 ## Dynamic Height
 
@@ -73,13 +77,14 @@ window.addEventListener('message', (event) => {
 }
 ```
 
-## Handle Bank Selection
+## Handle Bank Selection & Stripe Mutual Exclusion
 
-Listen for `postMessage` events from the iframe to track the customer's bank selection and payment scheme.
+The key behavior is ensuring only one payment method (Stripe **or** Quidkey) is active at a time. Listen for `postMessage` events from the iframe to track the customer's bank selection, and collapse the Stripe Payment Element when Quidkey is active.
 
 ```javascript
-let selectedBankId = null;
-let selectedPaymentScheme = null;
+// Track which payment method is currently selected
+let currentSelection = { source: null, method: null };
+let currentPaymentScheme = null;
 
 window.addEventListener('message', (event) => {
   if (event.data.type !== 'quidkey-state-update') return;
@@ -92,14 +97,28 @@ window.addEventListener('message', (event) => {
     );
   }
 
-  // Track bank selection
-  selectedBankId = event.data.selectedBankId || null;
-  selectedPaymentScheme = event.data.paymentScheme || null;
+  // Track payment scheme
+  currentPaymentScheme = event.data.paymentScheme || null;
 
-  // Enable your purchase button when a bank is selected
-  document.getElementById('pay-button').disabled = !selectedBankId;
+  // Handle bank selection
+  const selectedBankId = event.data.selectedBankId;
+  if (selectedBankId) {
+    currentSelection = { source: 'quidkey', method: selectedBankId };
+    purchaseButton.disabled = false;
+  }
+
+  // Collapse Stripe when Quidkey is active
+  if (event.data.isListOpen || event.data.isPredictedBankSelected) {
+    if (paymentElement) {
+      paymentElement.collapse();
+    }
+  }
 });
 ```
+
+<Tip>
+When the customer interacts with the Stripe Payment Element again, update `currentSelection` to `{ source: 'stripe', method: null }` using Stripe's `change` event listener.
+</Tip>
 
 ### postMessage Fields
 
@@ -127,32 +146,51 @@ The iframe supports multiple payment schemes automatically based on the customer
 - Future schemes like `"PIX"` and `"UPI"` will work automatically
 </Tip>
 
-## Initiate Payment
+## Route the Purchase Button
 
-When the customer clicks your purchase button, call your backend to initiate the payment via Quidkey. The API returns a `payment_link` URL — redirect the customer to complete bank authentication.
+When the customer clicks your purchase button, route to either Stripe or Quidkey based on their current selection.
 
-**Frontend:**
+<CodeGroup>
 
-```javascript
-document.getElementById('pay-button').addEventListener('click', async () => {
+```javascript Quidkey Path
+if (currentSelection.source === 'quidkey') {
   const response = await fetch('/api/quidkey/initiate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      bankId: selectedBankId,
-      paymentToken: 'YOUR_PAYMENT_TOKEN',
-      paymentScheme: selectedPaymentScheme
-    })
+      bankId: currentSelection.method,
+      paymentToken: quidkeyPaymentToken,
+      paymentScheme: currentPaymentScheme
+    }),
   });
 
   const result = await response.json();
   if (result.success && result.payment_link) {
     window.location.href = result.payment_link; // Redirect to bank
   }
-});
+}
 ```
 
-**Backend:**
+```javascript Stripe Path
+if (currentSelection.source === 'stripe') {
+  const { error } = await stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      return_url: `${window.location.origin}/success.html`,
+    },
+  });
+
+  if (error) {
+    console.error(error.message);
+  }
+}
+```
+
+</CodeGroup>
+
+### Quidkey Initiation Backend
+
+Your backend proxies the payment initiation to Quidkey and returns the bank redirect URL:
 
 ```javascript
 app.post('/api/quidkey/initiate', async (req, res) => {
@@ -181,19 +219,19 @@ After the customer authenticates with their bank, they're redirected to your `su
 
 <Steps>
 <Step title="Open your checkout page">
-  Load the page in your browser. Quidkey will predict and pre-select a demo bank in test mode.
+  Load the page in your browser. You should see both the Stripe Payment Element and the Quidkey bank picker. Quidkey will predict and pre-select a demo bank in test mode.
 </Step>
 
-<Step title="Confirm bank selection">
-  The demo bank should already be selected. Your purchase button should be enabled.
+<Step title="Test Quidkey path">
+  Click the Quidkey bank option — the Stripe Payment Element should collapse. Your purchase button should be enabled. Click Purchase, authenticate with any credentials (demo mode), and verify you're redirected to your success URL.
 </Step>
 
-<Step title="Complete payment">
-  Click your purchase button, authenticate with any credentials (it's demo mode), and you'll be redirected to your success URL.
+<Step title="Test Stripe path">
+  Reload and interact with the Stripe Payment Element instead — the Quidkey selection should clear. Confirm the Stripe payment flow works as before.
 </Step>
 
 <Step title="Verify with webhook">
-  Check your webhook endpoint (if configured) for the payment confirmation.
+  Check your webhook endpoint (if configured) for the Quidkey payment confirmation.
 </Step>
 </Steps>
 
@@ -201,17 +239,13 @@ After the customer authenticates with their bank, they're redirected to your `su
 
 <CardGroup cols={2}>
 <Card title="Live Demo" icon="browser" href="https://embedded.quidkey.com">
-  Try the integration in action with test credentials
+  Try the full Stripe + Quidkey integration with test credentials
 </Card>
 
 <Card title="API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
   Test API calls in your browser — no setup required
 </Card>
 </CardGroup>
-
-<Info>
-**Using alongside Stripe?** See the [Stripe Integration guide](/guides/embedded-with-stripe) for how to add Quidkey next to your existing Stripe Payment Element, including mutual exclusion and purchase button routing.
-</Info>
 
 ## Next Steps
 

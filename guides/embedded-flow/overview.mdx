@@ -1,10 +1,14 @@
 ---
-title: "Embedded Flow"
-description: "Add bank payments directly to your checkout page with an iframe"
+title: "Embedded Flow (with Stripe)"
+description: "Add Quidkey bank payments alongside your existing Stripe Payment Element"
 icon: "credit-card"
 ---
 
-The Embedded Flow lets you add Quidkey's bank payment option directly into your checkout page. Customers select their bank in an iframe on your site, authenticate with their bank, and complete the payment — all without leaving your checkout experience.
+The Embedded Flow adds Quidkey's bank payment option alongside your existing Stripe Payment Element. Customers see both payment methods on your checkout page and choose between card payments (Stripe) or bank transfers (Quidkey) — all without leaving your site.
+
+<Note>
+This guide assumes you already have a **Stripe Payment Element** integrated on your checkout page. You're adding Quidkey alongside Stripe, not replacing it.
+</Note>
 
 <CardGroup cols={2}>
 <Card title="Create a Payment Request" icon="plus" href="/guides/embedded-flow/create">
@@ -12,29 +16,37 @@ The Embedded Flow lets you add Quidkey's bank payment option directly into your 
 </Card>
 
 <Card title="Embed the Checkout" icon="browser" href="/guides/embedded-flow/embed">
-  Add the bank selection iframe to your checkout page
+  Add the bank selection iframe and wire up Stripe mutual exclusion
 </Card>
 
 <Card title="After Payment" icon="chart-line" href="/guides/embedded-flow/after-payment">
   Handle webhooks, verify signatures, and process fees
 </Card>
 
-<Card title="Stripe Integration" icon="code-merge" href="/guides/embedded-with-stripe">
-  Add Quidkey alongside your existing Stripe Payment Element
+<Card title="API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
+  Test creating a payment request in your browser — no setup required
 </Card>
 </CardGroup>
 
+## Prerequisites
+
+- [ ] **Stripe Payment Element already integrated** on your checkout page
+- [ ] Quidkey `client_id` and `client_secret` ([sign up](https://merchants.quidkey.com))
+- [ ] HTTPS enabled on your checkout page
+
+<Info>
+**No Stripe changes required** — your existing Stripe integration stays exactly as it is. You're adding Quidkey alongside, not replacing anything.
+</Info>
+
 ## When to Use the Embedded Flow
 
-The Embedded Flow and Payment Links serve different integration needs:
-
-| | **Embedded Flow** | **Payment Links** |
+| | **Embedded Flow (with Stripe)** | **Payment Links** |
 |---|---|---|
-| **Best for** | E-commerce checkouts, in-app payments | Invoicing, ad-hoc payments, no-code scenarios |
-| **Integration effort** | Embed iframe, handle postMessage events | API call to create link, then share the URL |
-| **Customer experience** | Inline checkout on your site | Quidkey-hosted checkout page |
-| **Frontend code** | HTML/JavaScript for iframe | None |
-| **Use case** | Online stores, subscription platforms | B2B invoices, service payments, cross-border pay-ins |
+| **Best for** | Merchants with an existing Stripe checkout | Invoicing, ad-hoc payments, no-code scenarios |
+| **Integration effort** | Embed iframe, handle postMessage events, route Pay button | One API call to create a link, then share the URL |
+| **Customer experience** | Inline checkout on your site (Stripe + Quidkey side by side) | Quidkey-hosted checkout page |
+| **Frontend code** | HTML/JavaScript for iframe + Stripe mutual exclusion | None |
+| **Use case** | E-commerce with Stripe, subscription platforms | B2B invoices, service payments, cross-border pay-ins |
 
 <Tip>
 **Need both?** You can use the Embedded Flow for your checkout page and Payment Links for invoice emails — they share the same backend API and webhook infrastructure.
@@ -46,26 +58,35 @@ The Embedded Flow and Payment Links serve different integration needs:
 sequenceDiagram
     autonumber
     actor Customer
-    participant Merchant as Your Site
-    participant Backend as Your Server
-    participant Quidkey as Quidkey API
-
-    Backend->>Quidkey: POST /oauth2/token
-    Quidkey-->>Backend: { access_token }
-    Customer->>Merchant: Proceed to checkout
+    participant Merchant as Merchant (frontend)
+    participant Backend as Merchant (server)
+    participant Quidkey
+    Customer->>Merchant: Browse & fill checkout
+    Merchant->>Backend: Finalise price
     Backend->>Quidkey: POST /embedded/payment-requests
     Quidkey-->>Backend: { payment_token }
-    Merchant->>Merchant: Render iframe with payment_token
-    Note over Merchant: Quidkey predicts & pre-selects customer's bank
-    Customer->>Merchant: Confirm bank selection
-    Merchant->>Backend: Initiate payment (bankId, payment_token)
-    Backend->>Quidkey: POST /embedded/payment-initiation
+    Backend-->>Merchant: Render checkout + inject iframe
+    Merchant->>Quidkey: GET /embedded (iframe bootstrap)
+    Quidkey-->>Merchant: Bank picker HTML
+    opt Dynamic Updates (shipping, discounts, etc.)
+        Customer->>Merchant: Change shipping/apply code
+        Merchant->>Backend: Calculate new total
+        Backend->>Quidkey: PATCH /embedded/payment-requests
+        Quidkey-->>Backend: { updated amount/rewards }
+        Backend-->>Merchant: Update confirmed
+        Merchant->>Merchant: Refresh iframe & UI
+    end
+    Customer->>Merchant: Click preferred bank
+    Merchant->>Merchant: postMessage { bankId, paymentScheme }
+    Merchant->>Backend: POST /embedded/payment-initiation
+    Backend->>Quidkey: POST /payment-initiations
     Quidkey-->>Backend: { payment_link }
-    Merchant-->>Customer: Redirect to bank
+    Backend-->>Merchant: { payment_link }
+    Merchant-->>Customer: Redirect to bank (SCA)
     Customer->>Quidkey: Authenticate & approve payment
     alt Success
         Quidkey-->>Customer: Redirect to success_url
-    else Failure
+    else Failure / cancel
         Quidkey-->>Customer: Redirect to failure_url
     end
     Quidkey-->>Backend: Webhook notification
@@ -73,13 +94,13 @@ sequenceDiagram
 
 ## Key Features
 
-- **Bank prediction** — Quidkey automatically predicts and pre-selects the customer's bank based on their country and information
-- **Inline checkout** — Bank selection happens on your site via iframe, customers never leave your page
+- **Works alongside Stripe** — Customers choose between card (Stripe) or bank transfer (Quidkey) on the same checkout page
+- **Mutual exclusion** — When a customer selects Quidkey, the Stripe Payment Element collapses, and vice versa
+- **Bank prediction** — Quidkey automatically predicts and pre-selects the customer's bank
 - **Multiple payment schemes** — SEPA, Faster Payments, Multibanco, and more supported automatically
 - **Dynamic amounts** — Update the payment amount after creation (e.g., shipping costs, discounts)
 - **Dynamic height** — Iframe adjusts height automatically based on available payment methods
 - **Rewards** — Optional loyalty rewards displayed to customers during checkout
-- **Works alongside Stripe** — Add as a payment option next to your existing Stripe Payment Element
 
 ## Next Steps
 
@@ -89,7 +110,7 @@ sequenceDiagram
 </Step>
 
 <Step title="Embed the checkout">
-  Learn how to [embed the bank selection iframe](/guides/embedded-flow/embed) on your checkout page.
+  Learn how to [embed the bank selection iframe](/guides/embedded-flow/embed) on your checkout page, including Stripe mutual exclusion.
 </Step>
 
 <Step title="Handle post-payment">

@@ -36,13 +36,12 @@
             ]
           },
           {
-            "group": "Embedded Flow",
+            "group": "Embedded Flow (with Stripe)",
             "pages": [
               "guides/embedded-flow/overview",
               "guides/embedded-flow/create",
               "guides/embedded-flow/embed",
-              "guides/embedded-flow/after-payment",
-              "guides/embedded-with-stripe"
+              "guides/embedded-flow/after-payment"
             ]
           },
           {
