@@ -12,26 +12,34 @@ Quidkey offers two ways to collect bank-to-bank payments. Choose the path that f
 
 ## Choose Your Integration
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
+<Card title="Shopify" icon="shopify" href="/guides/shopify/onboarding">
+  Install the Quidkey Shopify app and enable Pay by Bank at checkout. No code required.
+
+  **Best for:** Shopify merchants
+
+  **You'll need:** Shopify admin access
+</Card>
+
 <Card title="Embedded Flow (with Stripe)" icon="credit-card" href="/guides/embedded-flow/overview">
-  Add Quidkey bank payments alongside your existing Stripe Payment Element. Customers choose between card or bank transfer at checkout.
+  Add Quidkey bank payments alongside your existing Stripe Payment Element.
 
   **Best for:** Merchants with an existing Stripe checkout
 
-  **You'll need:** Backend + frontend code (Stripe already integrated)
+  **You'll need:** Backend + frontend code
 </Card>
 
 <Card title="Payment Links" icon="link" href="/guides/payment-links/overview">
-  Generate shareable URLs that open a Quidkey-hosted checkout page. Send via email, SMS, or any messaging channel.
+  Generate shareable URLs that open a Quidkey-hosted checkout page.
 
-  **Best for:** Invoicing, ad-hoc payments, no-code scenarios
+  **Best for:** Invoicing, ad-hoc payments, no-code
 
   **You'll need:** One API call (no frontend code)
 </Card>
 </CardGroup>
 
 <Tip>
-**Not sure which to pick?** Use the **Embedded Flow** if you have a checkout page and want bank payments inline. Use **Payment Links** if you want to send a payment request without building a frontend.
+**Not sure which to pick?** Use **Shopify** if you're on Shopify. Use the **Embedded Flow** if you have a Stripe checkout and want bank payments inline. Use **Payment Links** if you want to send a payment request without building a frontend.
 </Tip>
 
 ---

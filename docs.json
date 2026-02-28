@@ -36,6 +36,12 @@
             ]
           },
           {
+            "group": "Shopify",
+            "pages": [
+              "guides/shopify/onboarding"
+            ]
+          },
+          {
             "group": "Embedded Flow (with Stripe)",
             "pages": [
               "guides/embedded-flow/overview",
