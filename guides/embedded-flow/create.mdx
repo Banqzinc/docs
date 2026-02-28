@@ -1,0 +1,279 @@
+---
+title: "Create a Payment Request"
+description: "Authenticate with the API and create a payment token for the checkout iframe"
+icon: "plus"
+---
+
+Create a payment request to get a `payment_token` that you'll use to render the bank selection iframe on your checkout page.
+
+## Prerequisites
+
+- A Quidkey merchant account with `client_id` and `client_secret`
+- HTTPS enabled on your checkout page
+
+<Card title="Sign Up for Credentials" icon="user-plus" href="https://merchants.quidkey.com">
+  Create your merchant account to get your client_id and client_secret.
+</Card>
+
+## Step 1: Authenticate
+
+Get an access token using your credentials. The token is valid for 15 minutes.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://core.quidkey.com/api/v1/oauth2/token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_id": "your-client-id",
+    "client_secret": "your-client-secret"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core.quidkey.com/api/v1/oauth2/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    client_id: process.env.QUIDKEY_CLIENT_ID,
+    client_secret: process.env.QUIDKEY_CLIENT_SECRET
+  })
+});
+
+const { access_token, refresh_token, expires_in } = await response.json();
+```
+
+```python Python
+import os, requests
+
+response = requests.post(
+    'https://core.quidkey.com/api/v1/oauth2/token',
+    json={
+        'client_id': os.getenv('QUIDKEY_CLIENT_ID'),
+        'client_secret': os.getenv('QUIDKEY_CLIENT_SECRET')
+    }
+)
+
+data = response.json()
+access_token = data['access_token']
+```
+
+</CodeGroup>
+
+<Tip>
+**What you'll receive:**
+- `access_token` — include as `Authorization: Bearer <token>` in subsequent calls
+- `refresh_token` — call `/oauth2/refresh` to get a new access token without re-posting credentials
+- `expires_in` — token validity in seconds (typically 900 = 15 minutes)
+
+See the [Authentication API reference](/api-reference/endpoint/issue-token) for complete details and interactive playground.
+</Tip>
+
+## Step 2: Create a Payment Request
+
+Use the access token to create a payment request. This should be called once the customer has confirmed the final price at checkout.
+
+<Warning>
+Create this request **after** the customer confirms price and options. The payment token has a 15-minute TTL.
+</Warning>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://core.quidkey.com/api/v1/embedded/payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "customer": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+4917646793347",
+      "country": "DE"
+    },
+    "order": {
+      "order_id": "ORD-123456",
+      "amount": 2550,
+      "currency": "EUR",
+      "payment_reference": "Order #3451",
+      "locale": "en-GB",
+      "test_transaction": true
+    },
+    "redirect_urls": {
+      "success_url": "https://yoursite.com/success",
+      "failure_url": "https://yoursite.com/failure"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core.quidkey.com/api/v1/embedded/payment-requests', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    customer: {
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+4917646793347',
+      country: 'DE'
+    },
+    order: {
+      order_id: 'ORD-123456',
+      amount: 2550,       // €25.50 in cents
+      currency: 'EUR',
+      payment_reference: 'Order #3451',
+      locale: 'en-GB',
+      test_transaction: true
+    },
+    redirect_urls: {
+      success_url: 'https://yoursite.com/success',
+      failure_url: 'https://yoursite.com/failure'
+    }
+  })
+});
+
+const { payment_token, expires_in } = await response.json();
+console.log('Payment token:', payment_token);
+```
+
+```python Python
+response = requests.post(
+    'https://core.quidkey.com/api/v1/embedded/payment-requests',
+    headers={'Authorization': f'Bearer {access_token}'},
+    json={
+        'customer': {
+            'name': 'John Doe',
+            'email': 'john@example.com',
+            'phone': '+4917646793347',
+            'country': 'DE'
+        },
+        'order': {
+            'order_id': 'ORD-123456',
+            'amount': 2550,       # €25.50 in cents
+            'currency': 'EUR',
+            'payment_reference': 'Order #3451',
+            'locale': 'en-GB',
+            'test_transaction': True
+        },
+        'redirect_urls': {
+            'success_url': 'https://yoursite.com/success',
+            'failure_url': 'https://yoursite.com/failure'
+        }
+    }
+)
+
+data = response.json()
+payment_token = data['payment_token']
+```
+
+</CodeGroup>
+
+<Check>
+You'll receive a `payment_token` (valid for 15 minutes) to embed in your iframe. See the [Create Payment Request API](/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow) for the complete specification.
+</Check>
+
+### Request Body Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `customer.name` | string | Yes | Customer's full name |
+| `customer.email` | string | Yes | Customer's email address |
+| `customer.phone` | string | Yes | E.164 format phone number |
+| `customer.country` | string | Yes | ISO 3166-1 alpha-2 country code |
+| `order.amount` | integer | Yes | Amount in minor units (cents). `2550` = €25.50 |
+| `order.currency` | string | Yes | ISO 4217 currency code |
+| `order.payment_reference` | string | Yes | Reference shown on bank statement |
+| `order.order_id` | string | No | Your internal order identifier |
+| `order.locale` | string | No | BCP-47 locale tag. Default: `en` |
+| `order.test_transaction` | boolean | No | Set `true` for development testing |
+| `order.rewards` | object | No | Optional loyalty rewards (see below) |
+| `redirect_urls.success_url` | string | Yes | Where to redirect after successful payment |
+| `redirect_urls.failure_url` | string | Yes | Where to redirect after failed/cancelled payment |
+
+<Note>
+**Amount format:** Use minor units (cents). `1000` = €10.00, `2550` = €25.50. This matches Stripe's format exactly.
+</Note>
+
+<AccordionGroup>
+
+<Accordion title="Rewards (optional)">
+Include a `rewards` object to display loyalty rewards during checkout:
+
+```json
+{
+  "rewards": {
+    "extra_rewards": 150,
+    "total_rewards": 300,
+    "description": "Loyalty bonus + base rewards"
+  }
+}
+```
+
+- `extra_rewards` — reward points for this transaction
+- `total_rewards` — total points customer will receive (optional)
+- `description` — text describing the reward (max 255 characters, optional)
+
+Rewards are distributed only on successful payment completion via webhook.
+</Accordion>
+
+</AccordionGroup>
+
+## Update a Payment Request (Optional)
+
+After creating a payment request, you can update the amount and/or rewards **before** the customer initiates payment with their bank. This is useful for dynamic shipping costs, discount codes, or cart modifications.
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH 'https://core.quidkey.com/api/v1/embedded/payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "payment_token": "ptok_efghijklm...",
+    "amount": 2750
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core.quidkey.com/api/v1/embedded/payment-requests', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    payment_token: paymentToken,
+    amount: originalAmount + shippingCost
+  })
+});
+```
+
+</CodeGroup>
+
+<Warning>
+- Amount updates are only allowed while payment status is `pending`
+- Once the customer clicks a bank and starts payment, only rewards can be updated
+- Amount updates are blocked after payment initiation
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Embed the Checkout" icon="browser" href="/guides/embedded-flow/embed">
+  Add the bank selection iframe to your checkout page
+</Card>
+
+<Card title="After Payment" icon="chart-line" href="/guides/embedded-flow/after-payment">
+  Handle webhooks, verify signatures, and process fees
+</Card>
+
+<Card title="API Reference" icon="code" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
+  Full endpoint documentation with interactive playground
+</Card>
+
+<Card title="Embedded Flow Overview" icon="credit-card" href="/guides/embedded-flow/overview">
+  Back to the overview and integration flow diagram
+</Card>
+</CardGroup>

@@ -9,8 +9,7 @@ Quidkey provides separate environments for development and production:
 
 | Environment | Base URL | Purpose |
 |------------|----------|---------|
-| **Development** | `https://core-dev.quidkey.com` | Testing and integration development |
-| **Production** | `https://core.quidkey.com` | Live payments |
+| **Base URL** | `https://core.quidkey.com` | All API requests |
 
 <Warning>
 Always use `test_transaction: true` in development to avoid processing real payments.
@@ -54,6 +53,10 @@ The Quidkey API is organized into logical groups:
 
 <Card title="Embedded Payment Flow" icon="credit-card" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
   Create, update, and initiate payments
+</Card>
+
+<Card title="Payment Links" icon="link" href="/api-reference/payment-links/create-a-payment-link">
+  Create, list, and manage shareable payment URLs
 </Card>
 
 <Card title="Webhooks" icon="webhook" href="/api-reference/webhook/register-or-update-a-merchant-webhook-url">
@@ -113,6 +116,8 @@ Common error codes you may encounter:
 | `MERCHANT_NOT_FOUND` | Invalid merchant ID | Verify your credentials |
 | `PAYMENT_REQUEST_NOT_FOUND` | Invalid payment token | Check token hasn't expired (15 min TTL) |
 | `PAYMENT_ALREADY_INITIATED` | Payment already in progress | Cannot update amount after customer selects bank |
+| `PAYMENT_LINK_NOT_FOUND` | Invalid payment link token or ID | Verify the token or link ID |
+| `PAYMENT_LINK_NOT_ACTIVE` | Link is used, expired, or cancelled | Check link status before attempting payment |
 
 <Tip>
 All error responses include a human-readable `message` field. Use `code` for programmatic handling, `message` for logging/debugging.
@@ -139,8 +144,8 @@ The current API version is **v1**, indicated in all endpoint paths: `/api/v1/...
   Get your first payment working in 10 minutes
 </Card>
 
-<Card title="Integration Guide" icon="code" href="/guides/embedded-with-stripe">
-  Complete production-ready integration
+<Card title="Embedded Flow" icon="credit-card" href="/guides/embedded-flow/overview">
+  Complete embedded payment integration guide
 </Card>
 </CardGroup>
 

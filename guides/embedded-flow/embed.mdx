@@ -1,0 +1,260 @@
+---
+title: "Embed the Checkout"
+description: "Add the bank selection iframe alongside Stripe and wire up mutual exclusion"
+icon: "browser"
+---
+
+After [creating a payment request](/guides/embedded-flow/create), embed the Quidkey bank selection iframe on your checkout page alongside your existing Stripe Payment Element. Customers choose between Stripe or Quidkey, and you route the payment based on their selection.
+
+## Add the Iframe
+
+Add the iframe using the `payment_token` from the create step. Place it near your Stripe Payment Element so customers see both options. If the Quidkey API call fails, keep your page in its default Stripe-only state.
+
+```html
+<iframe
+  id="quidkey-iframe"
+  src="https://core.quidkey.com/api/v1/embedded?payment_token=YOUR_PAYMENT_TOKEN"
+  title="Quidkey checkout"
+  style="width:100%;height:108px;border:0;overflow:hidden"
+  loading="lazy"
+></iframe>
+```
+
+Quidkey will automatically predict and pre-select the customer's bank based on their country and information.
+
+### Stripe PaymentIntent
+
+Your existing PaymentIntent creation stays exactly as it is. As long as you already render a single Stripe Payment Element, no backend changes are required.
+
+## Dynamic Height
+
+The iframe adjusts its height based on available payment methods and open bank lists.
+
+**Height calculation:**
+- **Base**: `payment_method_count x 54px` (includes 1px border per method)
+- **With drawer open**: Additional 263px when bank selection lists are open
+- **Standard markets**: 2 payment methods (108px base)
+- **Enhanced markets**: 3+ payment methods (162px+ base) — e.g., Portugal with Multibanco
+
+**JavaScript:**
+
+```javascript
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'quidkey-state-update' && event.data.dynamicHeight) {
+    document.documentElement.style.setProperty(
+      '--quidkey-dynamic-height',
+      event.data.dynamicHeight
+    );
+  }
+});
+```
+
+**CSS:**
+
+```css
+:root {
+  --quidkey-dynamic-height: 108px; /* Default for 2 methods */
+}
+
+.quidkey-element-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: var(--quidkey-dynamic-height);
+  min-height: var(--quidkey-dynamic-height);
+  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.03), 0px 3px 6px rgba(0, 0, 0, 0.02);
+  transition: height 0.35s !important;
+}
+
+.quidkey-element-container iframe {
+  border: none;
+  height: inherit;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+```
+
+## Handle Bank Selection & Stripe Mutual Exclusion
+
+The key behavior is ensuring only one payment method (Stripe **or** Quidkey) is active at a time. Listen for `postMessage` events from the iframe to track the customer's bank selection, and collapse the Stripe Payment Element when Quidkey is active.
+
+```javascript
+// Track which payment method is currently selected
+let currentSelection = { source: null, method: null };
+let currentPaymentScheme = null;
+
+window.addEventListener('message', (event) => {
+  if (event.data.type !== 'quidkey-state-update') return;
+
+  // Update dynamic height
+  if (event.data.dynamicHeight) {
+    document.documentElement.style.setProperty(
+      '--quidkey-dynamic-height',
+      event.data.dynamicHeight
+    );
+  }
+
+  // Track payment scheme
+  currentPaymentScheme = event.data.paymentScheme || null;
+
+  // Handle bank selection
+  const selectedBankId = event.data.selectedBankId;
+  if (selectedBankId) {
+    currentSelection = { source: 'quidkey', method: selectedBankId };
+    purchaseButton.disabled = false;
+  }
+
+  // Collapse Stripe when Quidkey is active
+  if (event.data.isListOpen || event.data.isPredictedBankSelected) {
+    if (paymentElement) {
+      paymentElement.collapse();
+    }
+  }
+});
+```
+
+<Tip>
+When the customer interacts with the Stripe Payment Element again, update `currentSelection` to `{ source: 'stripe', method: null }` using Stripe's `change` event listener.
+</Tip>
+
+### postMessage Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Always `"quidkey-state-update"` |
+| `selectedBankId` | string \| null | Selected bank ID (null if deselected) |
+| `paymentScheme` | string \| null | Payment scheme (e.g., `"SEPA_CREDIT_TRANSFER"`, `"MULTIBANCO"`) |
+| `dynamicHeight` | string | CSS height value (e.g., `"108px"`, `"371px"`) |
+| `isListOpen` | boolean | Whether the bank list drawer is open |
+| `isPredictedBankSelected` | boolean | Whether Quidkey's predicted bank is selected |
+
+## Payment Schemes
+
+The iframe supports multiple payment schemes automatically based on the customer's country:
+- **SEPA** — EU-wide credit transfers
+- **Faster Payments** — UK instant payments
+- **Multibanco** — Portuguese payment method
+
+<Tip>
+**Payment Scheme Values:**
+- `null` or `undefined` — use default scheme for customer's country
+- `"MULTIBANCO"` — user explicitly selected Multibanco
+- `"SEPA_CREDIT_TRANSFER"` — user explicitly selected SEPA
+- Future schemes like `"PIX"` and `"UPI"` will work automatically
+</Tip>
+
+## Route the Purchase Button
+
+When the customer clicks your purchase button, route to either Stripe or Quidkey based on their current selection.
+
+<CodeGroup>
+
+```javascript Quidkey Path
+if (currentSelection.source === 'quidkey') {
+  const response = await fetch('/api/quidkey/initiate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      bankId: currentSelection.method,
+      paymentToken: quidkeyPaymentToken,
+      paymentScheme: currentPaymentScheme
+    }),
+  });
+
+  const result = await response.json();
+  if (result.success && result.payment_link) {
+    window.location.href = result.payment_link; // Redirect to bank
+  }
+}
+```
+
+```javascript Stripe Path
+if (currentSelection.source === 'stripe') {
+  const { error } = await stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      return_url: `${window.location.origin}/success.html`,
+    },
+  });
+
+  if (error) {
+    console.error(error.message);
+  }
+}
+```
+
+</CodeGroup>
+
+### Quidkey Initiation Backend
+
+Your backend proxies the payment initiation to Quidkey and returns the bank redirect URL:
+
+```javascript
+app.post('/api/quidkey/initiate', async (req, res) => {
+  const { bankId, paymentToken, paymentScheme } = req.body;
+
+  const result = await fetch('https://core.quidkey.com/api/v1/embedded/payment-initiation', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      bankId,
+      paymentScheme: paymentScheme || null
+    })
+  });
+
+  const data = await result.json();
+  res.json(data);
+});
+```
+
+After the customer authenticates with their bank, they're redirected to your `success_url` or `failure_url`.
+
+## Test with Demo Bank
+
+<Steps>
+<Step title="Open your checkout page">
+  Load the page in your browser. You should see both the Stripe Payment Element and the Quidkey bank picker. Quidkey will predict and pre-select a demo bank in test mode.
+</Step>
+
+<Step title="Test Quidkey path">
+  Click the Quidkey bank option — the Stripe Payment Element should collapse. Your purchase button should be enabled. Click Purchase, authenticate with any credentials (demo mode), and verify you're redirected to your success URL.
+</Step>
+
+<Step title="Test Stripe path">
+  Reload and interact with the Stripe Payment Element instead — the Quidkey selection should clear. Confirm the Stripe payment flow works as before.
+</Step>
+
+<Step title="Verify with webhook">
+  Check your webhook endpoint (if configured) for the Quidkey payment confirmation.
+</Step>
+</Steps>
+
+## Reference Implementation
+
+<CardGroup cols={2}>
+<Card title="Live Demo" icon="browser" href="https://embedded.quidkey.com">
+  Try the full Stripe + Quidkey integration with test credentials
+</Card>
+
+<Card title="API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
+  Test API calls in your browser — no setup required
+</Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="After Payment" icon="chart-line" href="/guides/embedded-flow/after-payment">
+  Handle webhooks, verify signatures, and process fees
+</Card>
+
+<Card title="Create a Payment Request" icon="plus" href="/guides/embedded-flow/create">
+  Payment request creation and updates
+</Card>
+</CardGroup>

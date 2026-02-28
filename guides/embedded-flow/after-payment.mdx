@@ -1,0 +1,278 @@
+---
+title: "After Payment"
+description: "Handle webhooks, verify signatures, process fees, and go live"
+icon: "chart-line"
+---
+
+After a customer completes a payment, Quidkey delivers the result to your backend via an HTTPS webhook. This guide covers webhook setup, signature verification, fee processing, and a production QA checklist.
+
+## Redirect Handling
+
+After bank authentication, the customer is redirected to the URL you specified when [creating the payment request](/guides/embedded-flow/create):
+- **Success** — redirected to `success_url`
+- **Failure / Cancel** — redirected to `failure_url`
+
+<Warning>
+Do not rely solely on the redirect to confirm payment. Always verify payment status via the webhook — redirects can fail or be interrupted.
+</Warning>
+
+## Webhook Setup
+
+### Register and Obtain a Signing Secret
+
+<Steps>
+
+<Step title="Register your webhook URL">
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "webhook_url": "https://api.yoursite.com/webhooks/quidkey"
+  }'
+```
+
+The response confirms the URL has been registered.
+</Step>
+
+<Step title="Generate the signing secret">
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+<Warning>
+The secret is returned **once** — store it safely in a secure vault (AWS Secrets Manager, HashiCorp Vault, etc.).
+</Warning>
+
+<Tip>
+See the [Generate Webhook Secret API](/api-reference/webhook/generate-a-webhook-signing-secret-for-the-authenticated-merchant) for complete details and interactive playground.
+</Tip>
+</Step>
+
+<Step title="Revoke the secret (if needed)">
+Roll or revoke the secret during incident response:
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret/revoke' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+</Step>
+
+</Steps>
+
+### Webhook Payload
+
+Quidkey sends a Stripe-style envelope so existing tooling can be reused.
+
+```json
+{
+  "id": "evt_28b2d68f",
+  "object": "event",
+  "created": 1716148300,
+  "type": "quidkey.payment_request.succeeded",
+  "data": {
+    "object": {
+      "id": "pr_782516093",
+      "amount": 2550,
+      "currency": "EUR",
+      "status": "succeeded",
+      "test": true,
+      "metadata": {
+        "order_id": "ORD-123",
+        "payment_token": "ptok_..."
+      },
+      "fees": {
+        "total_fees": 2.50,
+        "fees_currency": "EUR",
+        "fees_breakdown": [
+          {
+            "id": "fee_percentage_123",
+            "type": "percentage",
+            "amount": 1.50,
+            "currency": "EUR",
+            "rate_type": "domestic_percent_fee",
+            "rate_value": 1.5,
+            "notes": "1.5% fee on 25.50 EUR"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+<Note>
+**Fee information** is only included for successful payments (`status: "succeeded"`). Failed or cancelled payments do not include fees.
+</Note>
+
+### HTTP Headers
+
+| Header | Purpose |
+|--------|---------|
+| `X-Signature` | `t=<unix-ts>,v1=<hex-hmac>` |
+| `X-Timestamp` | Unix epoch seconds |
+| `X-Client-Id` | Your `client_id` |
+
+The HMAC is SHA-256 over `"${timestamp}.${raw_body}"`, keyed by your **webhook signing secret**.
+
+### Verify Signatures
+
+The `X-Signature` header lets you confirm that the webhook came from Quidkey and that the payload was not tampered with.
+
+<Tabs>
+
+<Tab title="Using Stripe Helper">
+```typescript
+const sig = req.get('x-signature');
+const event = stripe.webhooks.constructEvent(
+  req.rawBody,
+  sig,
+  process.env.QUIDKEY_WEBHOOK_SECRET
+);
+```
+</Tab>
+
+<Tab title="Custom Implementation">
+```typescript
+import crypto from 'crypto';
+
+function verify(rawBody: Buffer, header: string, secret: string) {
+  const [, ts, v1] = header.match(/^t=(\d+),v1=(.+)$/) || [];
+  const hmac = crypto
+    .createHmac('sha256', secret)
+    .update(`${ts}.${rawBody}`)
+    .digest('hex');
+
+  if (hmac !== v1) throw new Error('Invalid signature');
+  // Optional: check timestamp tolerance (5 min)
+}
+```
+</Tab>
+
+</Tabs>
+
+### Process Webhook Events
+
+```typescript
+app.post('/webhooks/quidkey', (req, res) => {
+  const event = stripe.webhooks.constructEvent(
+    req.body,
+    req.headers['x-signature'],
+    webhookSecret
+  );
+
+  if (event.type === 'quidkey.payment_request.succeeded') {
+    const payment = event.data.object;
+
+    // Store payment details
+    await updatePayment(payment.metadata.order_id, {
+      status: payment.status,
+      amount: payment.amount,
+      currency: payment.currency
+    });
+
+    // Process fee information if present
+    if (payment.fees) {
+      await storeFeeInformation({
+        orderId: payment.metadata.order_id,
+        totalFees: payment.fees.total_fees,
+        feesCurrency: payment.fees.fees_currency,
+        feeBreakdown: payment.fees.fees_breakdown
+      });
+    }
+
+    // Process reward information if present
+    if (payment.rewards) {
+      await distributeRewards({
+        orderId: payment.metadata.order_id,
+        extraRewards: payment.rewards.extra_rewards,
+        totalRewards: payment.rewards.total_rewards
+      });
+    }
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+<Info>
+**Retry behavior:** Quidkey retries for up to **3 days** with exponential backoff until your endpoint returns any `2xx` status. Events may be delivered out of order or duplicated — de-duplicate using the top-level `id` field.
+</Info>
+
+## Fee Handling
+
+Quidkey automatically calculates and applies fees for successful transactions. Fee information is included in webhook payloads for merchant accounting and billing reconciliation.
+
+**Fee types:**
+- **Percentage fees** — based on transaction amount (e.g., 1.5% of €100 = €1.50)
+- **Fixed fees** — flat rate per transaction (e.g., €1.00 per transaction)
+- **Currency-specific** — fees are calculated in the same currency as the transaction
+
+Each fee in the `fees_breakdown` array contains:
+
+```json
+{
+  "id": "fee_unique_identifier",
+  "type": "percentage",
+  "amount": 1.50,
+  "currency": "EUR",
+  "rate_type": "domestic_percent_fee",
+  "rate_value": 1.5,
+  "notes": "1.5% fee on 25.50 EUR"
+}
+```
+
+## QA Checklist Before Going Live
+
+<AccordionGroup>
+
+<Accordion title="Security & Configuration">
+- [ ] Serve checkout over HTTPS (wallets such as Apple Pay require it)
+- [ ] Use live Stripe keys in production mode (if using Stripe alongside)
+- [ ] Ask Quidkey for your production merchant_id and iframe URL
+- [ ] Store webhook secret in secure vault
+</Accordion>
+
+<Accordion title="User Experience">
+- [ ] Verify that only one payment method can be selected at any time
+- [ ] Confirm purchase button enables/disables correctly with bank selection
+- [ ] Test post-purchase redirect flows for success and failure
+- [ ] Verify dynamic height adjustments work smoothly
+</Accordion>
+
+<Accordion title="Payment Updates">
+- [ ] Verify amount updates work before payment initiation
+- [ ] Confirm updates are blocked after customer selects a bank
+- [ ] Test error handling for expired tokens
+- [ ] Ensure iframe refreshes correctly after updates
+</Accordion>
+
+<Accordion title="Webhooks & Fees">
+- [ ] Verify webhook signature validation works
+- [ ] Test webhook retry and idempotency handling
+- [ ] Verify successful payments include fee information
+- [ ] Ensure your system correctly stores fee breakdown data
+</Accordion>
+
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Embedded Flow Overview" icon="credit-card" href="/guides/embedded-flow/overview">
+  Back to the Embedded Flow overview
+</Card>
+
+<Card title="Embed the Checkout" icon="browser" href="/guides/embedded-flow/embed">
+  Iframe setup, Stripe mutual exclusion, and purchase button routing
+</Card>
+
+<Card title="Webhook API Reference" icon="webhook" href="/api-reference/webhook/register-or-update-a-merchant-webhook-url">
+  Full webhook endpoint documentation
+</Card>
+
+<Card title="Payment Links" icon="link" href="/guides/payment-links/overview">
+  Collect payments via shareable URLs instead
+</Card>
+</CardGroup>

@@ -1,0 +1,253 @@
+---
+title: "Shopify Onboarding"
+description: "Connect your Shopify store to Quidkey and enable Pay by Bank in your checkout"
+icon: "shopify"
+---
+
+This guide walks you through connecting your Shopify store to Quidkey and enabling Pay by Bank in your checkout. You can test Quidkey on your Shopify store without completing KYC or KYB — full verification is only required when you're ready to go live.
+
+## Prerequisites
+
+<CardGroup cols={2}>
+<Card title="To test Quidkey" icon="flask">
+  - A Shopify store with admin access
+  - A Quidkey account (no documents or contracts required)
+
+  You can install the app, connect it, and run a full test payment without providing any business information.
+</Card>
+
+<Card title="To go live" icon="rocket">
+  - Business registration details
+  - Director and beneficial owner information
+  - Proof of identity
+  - Business bank account information (for payouts)
+
+  This is the standard KYB/KYC verification required for regulated payment processing.
+</Card>
+</CardGroup>
+
+## Step 1: Create Your Quidkey Account
+
+<Steps>
+<Step title="Sign up">
+  Go to [merchants.quidkey.com/signup](https://merchants.quidkey.com/signup) and create your account with your business details.
+</Step>
+
+<Step title="Land on the Install page">
+  After signup, you'll land on the **Install Quidkey** page with Shopify already selected. You're ready to install the Shopify app directly from this page.
+</Step>
+</Steps>
+
+<Frame>
+  <img src="/images/shopify/install-quidkey-page.png" alt="Install Quidkey page with Shopify selected and the Shopify plugin button" />
+</Frame>
+
+## Step 2: Install the Shopify App
+
+You'll be redirected to the Shopify App Store after clicking the Shopify card. You can also open the app directly: [apps.shopify.com/quidkey-checkout](https://apps.shopify.com/quidkey-checkout)
+
+<Steps>
+<Step title="Open the App Store listing">
+  Click the **Shopify** card on the Install Quidkey page. Shopify will open in a new tab showing the **Pay by Bank** app.
+</Step>
+
+<Step title="Install the app">
+  Click **Install**.
+
+  <Frame>
+    <img src="/images/shopify/shopify-app-store.png" alt="Shopify App Store page for Pay By Bank" />
+  </Frame>
+</Step>
+
+<Step title="Approve permissions">
+  Shopify will show the permissions screen. Click **Install** again to approve.
+
+  <Frame>
+    <img src="/images/shopify/shopify-permissions.png" alt="Shopify permissions screen for Pay By Bank" />
+  </Frame>
+</Step>
+
+<Step title="Continue to Connect Quidkey">
+  After installation, Shopify will automatically redirect you to the **Connect Quidkey** page. Keep both Shopify and Quidkey tabs open — you'll connect them in the next step.
+</Step>
+</Steps>
+
+## Step 3: Connect Shopify to Quidkey
+
+After installation, Shopify redirects you to the **Connect Quidkey** page. You need to copy your credentials from the Quidkey dashboard and paste them here.
+
+<Steps>
+<Step title="Copy your Client ID">
+  Go back to your Quidkey dashboard, find your **Client ID**, and copy it into the **Client ID** field in Shopify.
+</Step>
+
+<Step title="Generate your Client Secret">
+  In your Quidkey dashboard, click **Generate** to create your Client Secret.
+
+  <Frame>
+    <img src="/images/shopify/generate-client-secret.png" alt="Client Secret popup shown in the Quidkey dashboard" />
+  </Frame>
+
+  <Warning>
+  Your Client Secret is shown **only once**. Copy it immediately and paste it into Shopify.
+  </Warning>
+</Step>
+
+<Step title="Connect">
+  Paste the Client Secret into the **Client secret** field in Shopify, then click **Connect Quidkey**.
+
+  <Frame>
+    <img src="/images/shopify/connect-quidkey.png" alt="Shopify Connect Quidkey page where you paste your Client ID and Client Secret" />
+  </Frame>
+</Step>
+</Steps>
+
+### Enable Test Mode and Activate
+
+After connecting, Shopify will show your Quidkey payment provider settings. Test Mode is normally enabled by default. If not, enable it manually:
+
+1. Scroll to **Test Mode**
+2. Turn **Test mode** on
+3. Click **Activate**
+
+This allows you to make test payments safely without affecting real orders.
+
+<Frame>
+  <img src="/images/shopify/toggle-test-mode.png" alt="Activate Pay by Bank App with Test Mode enabled" />
+</Frame>
+
+## Step 4: Enable Pay by Bank Spotlight (Recommended)
+
+**Pay by Bank Spotlight** adds a small guidance indicator on your product pages. It's not a payment button — the actual Pay by Bank option appears on the checkout page. This indicator helps customers understand early that they can pay with their bank and increases conversion.
+
+<Steps>
+<Step title="Open the theme editor">
+  In your Shopify admin, go to **Online Store** > **Themes** and click **Customize** on your active theme.
+</Step>
+
+<Step title="Enable the app embed">
+  In the theme editor sidebar, open **App embeds**. Find **Pay by Bank Spotlight**, turn the toggle on, and click **Save**.
+
+  <Frame>
+    <img src="/images/shopify/theme-editor-app-embeds.png" alt="Theme editor App embeds page showing Pay By Bank Spotlight toggle" />
+  </Frame>
+</Step>
+
+<Step title="Verify on your store">
+  Open your staging store URL (`https://{your-store-name}.myshopify.com`), go to any product page, and check that the Pay by Bank indicator appears.
+
+  <Frame>
+    <img src="/images/shopify/pay-by-bank-spotlight.png" alt="Product page showing the Pay by Bank Spotlight in action" />
+  </Frame>
+</Step>
+</Steps>
+
+## Step 5: Test Your Checkout
+
+You can try Pay by Bank immediately, without completing KYC.
+
+<Warning>
+To run a test payment, you must use your **Shopify staging URL** (`https://{your-store-name}.myshopify.com`), not your custom domain. Test payment methods are **only** shown on the staging URL.
+</Warning>
+
+<Steps>
+<Step title="Open your staging URL">
+  Go to `https://{your-store-name}.myshopify.com`
+</Step>
+
+<Step title="Add a product and checkout">
+  Add any product to your cart and proceed to checkout.
+</Step>
+
+<Step title="Select Pay with your bank">
+  You should see **Pay with your bank** as a payment option.
+
+  <Frame>
+    <img src="/images/shopify/checkout-pay-by-bank.png" alt="Checkout page showing Pay with your bank available in test mode" />
+  </Frame>
+</Step>
+
+<Step title="Complete the test payment">
+  Choose any test bank and complete the simulated flow. Check your Quidkey dashboard to confirm the test order appears.
+</Step>
+</Steps>
+
+<Check>
+If you see "Pay with your bank" at checkout and can complete a test payment, your integration is working correctly.
+</Check>
+
+## Step 6: Go Live (When You're Ready)
+
+You only need to complete verification when you decide to accept real payments. This is done inside your Quidkey Merchant Portal.
+
+At the top of your dashboard, you'll see a **Go Live** progress bar that guides you through everything needed before accepting real payments.
+
+<Frame>
+  <img src="/images/shopify/go-live-progress.png" alt="Go Live progress bar in the Quidkey dashboard" />
+</Frame>
+
+KYC/KYB verification includes:
+- Business registration details
+- Director and beneficial owner information
+- Proof of identity
+- Bank account information for payouts
+
+Once approved:
+- Live payments will be enabled in your Quidkey account
+- Payouts will be activated
+- Your pricing will be applied
+
+**Final step in Shopify:** Go to your Shopify Pay by Bank app settings and turn off **Test Mode**. Your store is now live and ready to accept real Pay by Bank payments.
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Pay by Bank doesn't appear at checkout">
+- Confirm **Shopify Payments** is enabled on your store
+- Check that your Client Secret is valid and correctly pasted
+- Try a private/incognito window to remove cached settings
+- Make sure you're using the staging URL (`{store}.myshopify.com`) for test mode
+</Accordion>
+
+<Accordion title="Test order not appearing in Quidkey Dashboard">
+- Verify the Client Secret in Shopify matches your Quidkey dashboard
+- Confirm the app is installed and connected correctly
+- Try disconnecting and reconnecting the app
+</Accordion>
+
+<Accordion title="Pricing not updated">
+- Pricing is applied after KYC/KYB verification is complete
+- In test mode, default pricing is used
+</Accordion>
+
+</AccordionGroup>
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Do I need to complete KYC to test Quidkey?">
+No. KYC is only required when you want to go live and receive real payouts. You can fully test the integration without any verification.
+</Accordion>
+
+<Accordion title="Can I use Quidkey alongside other payment methods?">
+Yes. Quidkey works alongside any other payment gateway on Shopify. Customers choose their preferred method at checkout.
+</Accordion>
+
+<Accordion title="How long does KYC take?">
+Usually minutes, depending on the documents provided. We'll notify you once verification is complete.
+</Accordion>
+
+<Accordion title="How do payouts work?">
+Payouts are sent to your designated business bank account after KYC approval. Payout frequency and timing depend on your plan.
+</Accordion>
+
+</AccordionGroup>
+
+## Support
+
+Questions? We're here to help:
+- Email: [support@quidkey.com](mailto:support@quidkey.com)
+- Slack: We can create a shared channel for ongoing communication
+- Video calls: Contact [support@quidkey.com](mailto:support@quidkey.com) to schedule one
