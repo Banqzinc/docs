@@ -9228,7 +9228,7 @@
             "type": "string"
           },
           "payment_reference": {
-            "description": "Payment reference to appear on the payer’s bank statement (max 18 alphanumeric characters)",
+            "description": "Payment reference to appear on the payer\u2019s bank statement (max 18 alphanumeric characters)",
             "examples": [
               "ORDER123"
             ],
@@ -9892,7 +9892,7 @@
               "webhook_secret": {
                 "description": "The newly generated webhook signing secret",
                 "examples": [
-                  "whsec_a1b2c3d4e5f6…"
+                  "whsec_a1b2c3d4e5f6\u2026"
                 ],
                 "type": "string"
               }
@@ -11659,8 +11659,8 @@
               "symbol": {
                 "description": "Currency symbol",
                 "examples": [
-                  "€",
-                  "£",
+                  "\u20ac",
+                  "\u00a3",
                   "$"
                 ],
                 "type": "string"
@@ -11850,8 +11850,8 @@
               "symbol": {
                 "description": "Currency symbol",
                 "examples": [
-                  "€",
-                  "£",
+                  "\u20ac",
+                  "\u00a3",
                   "$"
                 ],
                 "type": "string"
@@ -12135,8 +12135,8 @@
                   "symbol": {
                     "description": "Currency symbol",
                     "examples": [
-                      "€",
-                      "£",
+                      "\u20ac",
+                      "\u00a3",
                       "$"
                     ],
                     "type": "string"
@@ -12193,8 +12193,8 @@
                         "symbol": {
                           "description": "Currency symbol",
                           "examples": [
-                            "€",
-                            "£",
+                            "\u20ac",
+                            "\u00a3",
                             "$"
                           ],
                           "type": "string"
@@ -12366,8 +12366,8 @@
                   "symbol": {
                     "description": "Currency symbol",
                     "examples": [
-                      "€",
-                      "£",
+                      "\u20ac",
+                      "\u00a3",
                       "$"
                     ],
                     "type": "string"
@@ -12651,8 +12651,8 @@
                       "symbol": {
                         "description": "Currency symbol",
                         "examples": [
-                          "€",
-                          "£",
+                          "\u20ac",
+                          "\u00a3",
                           "$"
                         ],
                         "type": "string"
@@ -12709,8 +12709,8 @@
                             "symbol": {
                               "description": "Currency symbol",
                               "examples": [
-                                "€",
-                                "£",
+                                "\u20ac",
+                                "\u00a3",
                                 "$"
                               ],
                               "type": "string"
@@ -12892,8 +12892,8 @@
                     "symbol": {
                       "description": "Currency symbol",
                       "examples": [
-                        "€",
-                        "£",
+                        "\u20ac",
+                        "\u00a3",
                         "$"
                       ],
                       "type": "string"
@@ -17269,6 +17269,340 @@
             }
           }
         }
+      },
+      "shared_Error410": {
+        "title": "Gone Error",
+        "description": "410 Gone Error Response",
+        "type": "object",
+        "properties": {
+          "success": {
+            "description": "Always false for error responses",
+            "examples": [
+              false
+            ],
+            "const": false,
+            "type": "boolean"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "description": "Error code",
+                "examples": [
+                  "PAYMENT_LINK_NOT_ACTIVE"
+                ],
+                "type": "string"
+              },
+              "message": {
+                "description": "Human-readable error message",
+                "examples": [
+                  "Payment link is no longer active"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      },
+      "paymentLink_CreateRequest": {
+        "title": "Create Payment Link Request",
+        "description": "Request body for creating a payment link",
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "description": "Payment order details",
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Amount in minor units (cents). 1000 = \u20ac10.00",
+                "examples": [
+                  5000
+                ]
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 currency code",
+                "examples": [
+                  "EUR",
+                  "GBP"
+                ]
+              },
+              "payment_reference": {
+                "type": "string",
+                "maxLength": 18,
+                "description": "Up to 18 characters. Appears on customer's bank statement.",
+                "examples": [
+                  "INV-2024-001"
+                ]
+              },
+              "order_id": {
+                "type": "string",
+                "description": "Your internal order identifier for reconciliation",
+                "examples": [
+                  "ORD-123456"
+                ]
+              },
+              "locale": {
+                "type": "string",
+                "description": "BCP-47 locale tag. Default: en",
+                "examples": [
+                  "en",
+                  "pt",
+                  "es"
+                ]
+              }
+            },
+            "required": [
+              "amount",
+              "currency",
+              "payment_reference"
+            ]
+          },
+          "merchant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Required for Partner authentication, forbidden for Merchant authentication"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Arbitrary key-value pairs to attach to the payment link",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "order"
+        ]
+      },
+      "paymentLink_CreateResponse": {
+        "title": "Create Payment Link Response",
+        "description": "Response from creating a payment link",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "examples": [
+              true
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "link_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Internal payment link identifier"
+              },
+              "payment_link_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Full URL to share with the customer. Contains a secure token."
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the link expires"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active"
+                ],
+                "description": "Payment link status (always 'active' at creation)"
+              }
+            },
+            "required": [
+              "link_id",
+              "payment_link_url",
+              "expires_at",
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "paymentLink_ListItem": {
+        "title": "Payment Link List Item",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "merchant": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "brand_name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "brand_name"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g. '50.00')"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code"
+          },
+          "payment_reference": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "used",
+              "expired",
+              "cancelled"
+            ]
+          },
+          "link_type": {
+            "type": "string",
+            "enum": [
+              "single_use",
+              "reusable"
+            ]
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "first_viewed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transaction_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Transaction ID when payment is complete"
+          }
+        }
+      },
+      "paymentLink_ListResponse": {
+        "title": "Payment Link List Response",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "examples": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/paymentLink_ListItem"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "totalPages": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "pagination"
+        ]
+      },
+      "paymentLink_DetailResponse": {
+        "title": "Payment Link Detail Response",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "examples": [
+              true
+            ]
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/paymentLink_ListItem"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "locale": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "payment_link_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri",
+                    "description": "Recoverable payment link URL"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
       }
     },
     "securitySchemes": {
@@ -18799,7 +19133,7 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "webhook_secret": "whsec_a1b2c3d4e5f6…"
+                    "webhook_secret": "whsec_a1b2c3d4e5f6\u2026"
                   }
                 }
               }
@@ -21772,7 +22106,7 @@
                     {
                       "currency": {
                         "code": "EUR",
-                        "symbol": "€",
+                        "symbol": "\u20ac",
                         "name": "Euro",
                         "minor_unit": 2
                       },
@@ -21935,7 +22269,7 @@
                   "data": {
                     "currency": {
                       "code": "EUR",
-                      "symbol": "€",
+                      "symbol": "\u20ac",
                       "name": "Euro",
                       "minor_unit": 2
                     },
@@ -21946,7 +22280,7 @@
                     "fees": {
                       "currency": {
                         "code": "EUR",
-                        "symbol": "€",
+                        "symbol": "\u20ac",
                         "name": "Euro",
                         "minor_unit": 2
                       },
@@ -21954,7 +22288,7 @@
                         {
                           "currency": {
                             "code": "EUR",
-                            "symbol": "€",
+                            "symbol": "\u20ac",
                             "name": "Euro",
                             "minor_unit": 2
                           }
@@ -24995,6 +25329,303 @@
                     "total": "100.00"
                   }
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payment-links": {
+      "post": {
+        "tags": [
+          "Payment Links"
+        ],
+        "summary": "Create a payment link",
+        "description": "Create a new payment link and receive a shareable URL. The link URL contains a secure token that is only returned once at creation time.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Payment link details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/paymentLink_CreateRequest"
+              },
+              "example": {
+                "order": {
+                  "amount": 5000,
+                  "currency": "EUR",
+                  "payment_reference": "INV-2024-001"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment link created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/paymentLink_CreateResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "link_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "payment_link_url": "https://core.quidkey.com/payment-link/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+                    "expires_at": "2024-04-07T12:00:00.000Z",
+                    "status": "active"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/shared_Error400"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "INVALID_INPUT",
+                    "message": "Invalid input provided",
+                    "errors": [
+                      {
+                        "field": "order.amount",
+                        "message": "Amount must be greater than 0"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/shared_Error401"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Payment Links"
+        ],
+        "summary": "List payment links",
+        "description": "Retrieve payment links with optional filtering by status, search, and pagination. Results are sorted by creation date (newest first).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "used",
+                "expired",
+                "cancelled"
+              ]
+            },
+            "description": "Filter by payment link status"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by payment reference or order ID"
+          },
+          {
+            "name": "merchant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by merchant ID (partner authentication only)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number (1-based)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment links retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/paymentLink_ListResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "merchant": {
+                        "id": "m1234567-abcd-ef01-2345-678901234567",
+                        "brand_name": "Acme Corp"
+                      },
+                      "amount": "50.00",
+                      "currency": "EUR",
+                      "payment_reference": "INV-2024-001",
+                      "order_id": null,
+                      "status": "active",
+                      "link_type": "single_use",
+                      "views_count": 3,
+                      "first_viewed_at": "2024-04-01T14:30:00.000Z",
+                      "expires_at": "2024-04-07T12:00:00.000Z",
+                      "created_at": "2024-03-31T12:00:00.000Z",
+                      "transaction_id": null
+                    }
+                  ],
+                  "pagination": {
+                    "page": 1,
+                    "limit": 20,
+                    "total": 1,
+                    "totalPages": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/shared_Error401"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payment-links/{id}": {
+      "get": {
+        "tags": [
+          "Payment Links"
+        ],
+        "summary": "Get payment link by ID",
+        "description": "Retrieve detailed information about a specific payment link, including the recoverable payment link URL, locale, metadata, and transaction ID.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Payment link ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment link details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/paymentLink_DetailResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "merchant": {
+                      "id": "m1234567-abcd-ef01-2345-678901234567",
+                      "brand_name": "Acme Corp"
+                    },
+                    "amount": "50.00",
+                    "currency": "EUR",
+                    "payment_reference": "INV-2024-001",
+                    "order_id": null,
+                    "status": "used",
+                    "link_type": "single_use",
+                    "views_count": 3,
+                    "first_viewed_at": "2024-04-01T14:30:00.000Z",
+                    "expires_at": "2024-04-07T12:00:00.000Z",
+                    "created_at": "2024-03-31T12:00:00.000Z",
+                    "transaction_id": "t9876543-dcba-fe01-2345-678901234567",
+                    "locale": "en",
+                    "metadata": null,
+                    "payment_link_url": "https://core.quidkey.com/payment-link/a1b2c3d4e5f6..."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/shared_Error401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment link not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/shared_Error404"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "PAYMENT_LINK_NOT_FOUND",
+                    "message": "Payment link not found"
+                  }
+                }
               }
             }
           }

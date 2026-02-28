@@ -40,6 +40,15 @@
             "pages": [
               "guides/embedded-with-stripe"
             ]
+          },
+          {
+            "group": "Payment Links",
+            "pages": [
+              "guides/payment-links/overview",
+              "guides/payment-links/create",
+              "guides/payment-links/checkout-experience",
+              "guides/payment-links/after-payment"
+            ]
           }
         ]
       },
@@ -67,6 +76,15 @@
               "POST /api/v1/embedded/payment-requests",
               "PATCH /api/v1/embedded/payment-requests",
               "POST /api/v1/embedded/payment-initiation"
+            ]
+          },
+          {
+            "group": "Payment Links",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "POST /api/v1/payment-links",
+              "GET /api/v1/payment-links",
+              "GET /api/v1/payment-links/{id}"
             ]
           },
           {

@@ -56,6 +56,10 @@ The Quidkey API is organized into logical groups:
   Create, update, and initiate payments
 </Card>
 
+<Card title="Payment Links" icon="link" href="/api-reference/payment-links/create-a-payment-link">
+  Create, list, and manage shareable payment URLs
+</Card>
+
 <Card title="Webhooks" icon="webhook" href="/api-reference/webhook/register-or-update-a-merchant-webhook-url">
   Configure webhook endpoints and secrets
 </Card>
@@ -113,6 +117,8 @@ Common error codes you may encounter:
 | `MERCHANT_NOT_FOUND` | Invalid merchant ID | Verify your credentials |
 | `PAYMENT_REQUEST_NOT_FOUND` | Invalid payment token | Check token hasn't expired (15 min TTL) |
 | `PAYMENT_ALREADY_INITIATED` | Payment already in progress | Cannot update amount after customer selects bank |
+| `PAYMENT_LINK_NOT_FOUND` | Invalid payment link token or ID | Verify the token or link ID |
+| `PAYMENT_LINK_NOT_ACTIVE` | Link is used, expired, or cancelled | Check link status before attempting payment |
 
 <Tip>
 All error responses include a human-readable `message` field. Use `code` for programmatic handling, `message` for logging/debugging.
