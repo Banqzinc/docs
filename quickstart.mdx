@@ -1,48 +1,44 @@
 ---
 title: "Quickstart"
-description: "Get your first Quidkey payment working in 10 minutes"
+description: "Get your first Quidkey payment working in minutes"
 icon: "rocket"
 ---
 
-Get a payment working in your development environment. This guide gets you to success quickly - for production setup, see the [complete integration guide](/guides/embedded-with-stripe).
+Quidkey offers two ways to collect bank-to-bank payments. Choose the path that fits your use case, then follow the guide to get your first payment working.
 
 <Card title="Sign Up for Credentials" icon="user-plus" href="https://merchants.quidkey.com" size="lg">
   Create your merchant account to get your client_id and client_secret. **Time to complete:** 2-4 hours
 </Card>
 
-## What You'll Build
+## Choose Your Integration
 
-By the end of this quickstart, you'll have:
-- Authenticated with Quidkey's API
-- Created a payment request
-- Rendered the Quidkey checkout iframe
-- Processed a test payment
+<CardGroup cols={2}>
+<Card title="Embedded Flow" icon="credit-card" href="/guides/embedded-flow/overview">
+  Add bank payments directly to your checkout page via iframe. Customers select their bank inline — they never leave your site.
 
-## Integration Overview
+  **Best for:** E-commerce, subscription platforms, in-app payments
 
-<Steps>
-<Step title="Backend: Create payment token">
-  `POST /oauth2/token` → get `access_token`
-  `POST /embedded/payment-requests` → get `payment_token`
-</Step>
+  **You'll need:** Backend + frontend code
+</Card>
 
-<Step title="Frontend: Render iframe">
-  Embed iframe with `?payment_token=...`
-  Quidkey predicts and pre-selects the customer's bank automatically
-  Listen for `postMessage` events from iframe
-</Step>
+<Card title="Payment Links" icon="link" href="/guides/payment-links/overview">
+  Generate shareable URLs that open a Quidkey-hosted checkout page. Send via email, SMS, or any messaging channel.
 
-<Step title="On Purchase: Initiate payment">
-  `POST /payment-initiations` → redirect customer to their bank
-  Customer pays with their trusted bank, not Quidkey
-</Step>
-</Steps>
+  **Best for:** Invoicing, ad-hoc payments, no-code scenarios
+
+  **You'll need:** One API call (no frontend code)
+</Card>
+</CardGroup>
+
+<Tip>
+**Not sure which to pick?** Use the **Embedded Flow** if you have a checkout page and want bank payments inline. Use **Payment Links** if you want to send a payment request without building a frontend.
+</Tip>
 
 ---
 
-## Step 1: Authenticate
+## Authenticate (Both Paths)
 
-Get an access token using your credentials.
+Regardless of which integration you choose, the first step is the same — get an access token using your credentials.
 
 <CodeGroup>
 
@@ -66,7 +62,6 @@ const response = await fetch('https://core-dev.quidkey.com/api/v1/oauth2/token',
 });
 
 const { access_token } = await response.json();
-console.log('Access token:', access_token);
 ```
 
 ```python Python
@@ -81,209 +76,44 @@ response = requests.post(
 )
 
 access_token = response.json()['data']['access_token']
-print(f'Access token: {access_token}')
 ```
 
 </CodeGroup>
 
 <Check>
-You should receive an `access_token` valid for 15 minutes. Save this for the next step.
+You should receive an `access_token` valid for 15 minutes. Save this for the next steps.
 </Check>
 
 <Tip>
-Don't have credentials yet? [Try it in the API playground](/api-reference/endpoint/issue-token) first - no authentication required for testing!
+Don't have credentials yet? [Try it in the API playground](/api-reference/endpoint/issue-token) first — no authentication required for testing!
 </Tip>
 
 ---
 
-## Step 2: Create a Payment Request
+## Next: Follow Your Path
 
-Use your access token to create a payment request.
-
-<CodeGroup>
-
-```bash cURL
-curl -X POST 'https://core-dev.quidkey.com/api/v1/embedded/payment-requests' \
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "customer": {
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+4917646793347",
-      "country": "DE"
-    },
-    "order": {
-      "order_id": "test-order-001",
-      "amount": 1000,
-      "currency": "EUR",
-      "payment_reference": "Test Payment",
-      "locale": "en-GB",
-      "test_transaction": true
-    },
-    "redirect_urls": {
-      "success_url": "https://yoursite.com/success",
-      "failure_url": "https://yoursite.com/failure"
-    }
-  }'
-```
-
-```javascript Node.js
-const response = await fetch('https://core-dev.quidkey.com/api/v1/embedded/payment-requests', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${access_token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    customer: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+4917646793347',
-      country: 'DE'
-    },
-    order: {
-      order_id: 'test-order-001',
-      amount: 1000, // €10.00 in cents
-      currency: 'EUR',
-      payment_reference: 'Test Payment',
-      locale: 'en-GB',
-      test_transaction: true
-    },
-    redirect_urls: {
-      success_url: 'https://yoursite.com/success',
-      failure_url: 'https://yoursite.com/failure'
-    }
-  })
-});
-
-const { payment_token } = await response.json();
-console.log('Payment token:', payment_token);
-```
-
-</CodeGroup>
-
-<Check>
-You should receive a `payment_token` - save this for embedding in the iframe.
-</Check>
-
-<Note>
-**Amount format:** Use cents (minor units). `1000` = €10.00. Same format as Stripe!
-</Note>
-
----
-
-## Step 3: Embed the Checkout
-
-Add the Quidkey iframe to your checkout page using the `payment_token` from Step 2. Quidkey will automatically predict and pre-select the customer's bank based on their information, so they can pay with their trusted bank brand.
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Quidkey Test Checkout</title>
-  <style>
-    .quidkey-container {
-      width: 100%;
-      max-width: 500px;
-      margin: 50px auto;
-    }
-  </style>
-</head>
-<body>
-  <div class="quidkey-container">
-    <h1>Test Payment - €10.00</h1>
-
-    <iframe
-      id="quidkey-iframe"
-      src="https://core-dev.quidkey.com/api/v1/embedded?payment_token=YOUR_PAYMENT_TOKEN"
-      style="width:100%;height:108px;border:0;"
-      title="Quidkey checkout"
-    ></iframe>
-
-    <button id="pay-button" disabled>Pay €10.00</button>
-  </div>
-
-  <script>
-    let selectedBankId = null;
-
-    // Listen for bank selection from iframe
-    // Quidkey predicts and pre-selects the customer's bank automatically
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'quidkey-state-update') {
-        selectedBankId = event.data.selectedBankId;
-
-        // Enable button when bank is pre-selected or selected
-        document.getElementById('pay-button').disabled = !selectedBankId;
-      }
-    });
-
-    // Handle payment initiation
-    document.getElementById('pay-button').addEventListener('click', async () => {
-      // Call your backend to initiate payment
-      const response = await fetch('/api/quidkey/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bankId: selectedBankId,
-          paymentToken: 'YOUR_PAYMENT_TOKEN'
-        })
-      });
-
-      const { payment_link } = await response.json();
-      window.location.href = payment_link; // Redirect to bank
-    });
-  </script>
-</body>
-</html>
-```
-
----
-
-## Step 4: Test with Demo Bank
-
-<Steps>
-<Step title="Open your checkout page">
-  Load the HTML file in your browser. Quidkey will automatically predict and pre-select a bank for test mode.
-</Step>
-
-<Step title="Bank pre-selected">
-  The demo bank should already be selected (or you can select it if needed). The Pay button should be enabled.
-</Step>
-
-<Step title="Complete payment">
-  Click Pay, authenticate with any credentials (it's demo), and you'll be redirected to your success URL.
-</Step>
-
-<Step title="Verify success">
-  Check your webhook endpoint (if configured) for the payment confirmation.
-</Step>
-</Steps>
-
-<Check>
-**Success!** You've processed your first Quidkey payment! 🎉
-</Check>
-
----
-
-## Next Steps
-
-Now that you have a working payment, take it to production:
+Now that you're authenticated, continue with your chosen integration:
 
 <CardGroup cols={2}>
-<Card title="Full Integration Guide" icon="code" href="/guides/embedded-with-stripe">
-  Production-ready integration with Stripe, webhooks, error handling, and more
+<Card title="Embedded Flow: Create a Payment Request" icon="plus" href="/guides/embedded-flow/create">
+  Create a payment token and embed the checkout iframe on your site
 </Card>
 
+<Card title="Payment Links: Create a Payment Link" icon="link" href="/guides/payment-links/create">
+  Generate a shareable payment URL in one API call
+</Card>
+</CardGroup>
+
+---
+
+## More Resources
+
+<CardGroup cols={2}>
 <Card title="API Reference" icon="book" href="/api-reference/introduction">
   Explore all endpoints with interactive playgrounds
 </Card>
 
-<Card title="Payment Links" icon="link" href="/guides/payment-links/overview">
-  Collect payments via shareable URLs — no frontend integration needed
-</Card>
-
-<Card title="Webhook Setup" icon="webhook" href="/guides/embedded-with-stripe#webhook-delivery">
+<Card title="Webhook Setup" icon="webhook" href="/guides/embedded-flow/after-payment">
   Configure webhooks to receive payment status updates
 </Card>
 </CardGroup>
@@ -297,5 +127,5 @@ Sign up at [merchants.quidkey.com](https://merchants.quidkey.com) to get your `c
 ## Support
 
 Questions? We're here to help:
-- 📧 Email: [rabea@quidkey.com](mailto:rabea@quidkey.com)
-- 💬 Response time: Typically within one business day
+- Email: [rabea@quidkey.com](mailto:rabea@quidkey.com)
+- Response time: Typically within one business day
