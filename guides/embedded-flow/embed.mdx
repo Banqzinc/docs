@@ -13,7 +13,7 @@ Add the iframe using the `payment_token` from the create step. Place it near you
 ```html
 <iframe
   id="quidkey-iframe"
-  src="https://core-dev.quidkey.com/api/v1/embedded?payment_token=YOUR_PAYMENT_TOKEN"
+  src="https://core.quidkey.com/api/v1/embedded?payment_token=YOUR_PAYMENT_TOKEN"
   title="Quidkey checkout"
   style="width:100%;height:108px;border:0;overflow:hidden"
   loading="lazy"
@@ -196,7 +196,7 @@ Your backend proxies the payment initiation to Quidkey and returns the bank redi
 app.post('/api/quidkey/initiate', async (req, res) => {
   const { bankId, paymentToken, paymentScheme } = req.body;
 
-  const result = await fetch('https://core-dev.quidkey.com/api/v1/embedded/payment-initiation', {
+  const result = await fetch('https://core.quidkey.com/api/v1/embedded/payment-initiation', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,

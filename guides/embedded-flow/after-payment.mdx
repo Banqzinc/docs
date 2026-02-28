@@ -24,7 +24,7 @@ Do not rely solely on the redirect to confirm payment. Always verify payment sta
 
 <Step title="Register your webhook URL">
 ```bash
-curl -X POST 'https://core-dev.quidkey.com/api/v1/webhooks' \
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -37,7 +37,7 @@ The response confirms the URL has been registered.
 
 <Step title="Generate the signing secret">
 ```bash
-curl -X POST 'https://core-dev.quidkey.com/api/v1/webhooks/secret' \
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -54,7 +54,7 @@ See the [Generate Webhook Secret API](/api-reference/webhook/generate-a-webhook-
 Roll or revoke the secret during incident response:
 
 ```bash
-curl -X POST 'https://core-dev.quidkey.com/api/v1/webhooks/secret/revoke' \
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret/revoke' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 </Step>

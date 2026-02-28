@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://core-dev.quidkey.com",
+      "url": "https://core.quidkey.com",
       "description": "Development"
     },
     {
