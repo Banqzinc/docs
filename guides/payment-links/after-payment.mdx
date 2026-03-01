@@ -69,7 +69,8 @@ print(f"Transaction: {data['transaction_id']}")
     "transaction_id": "t9876543-dcba-fe01-2345-678901234567",
     "locale": "en",
     "metadata": null,
-    "payment_link_url": "https://core.quidkey.com/payment-link/a1b2c3d4e5f6..."
+    "payment_link_url": "https://core.quidkey.com/payment-link/a1b2c3d4e5f6...",
+    "redirect_urls": null
   }
 }
 ```
@@ -108,6 +109,25 @@ stateDiagram-v2
 
 <Note>
 **Expiry is checked on demand.** Quidkey marks a link as expired when it is next accessed (via the public checkout page or the API), not via a background job. This means a link's status in the database may show `active` until someone accesses it after the expiry time.
+</Note>
+
+## Redirect URLs
+
+If you provided `redirect_urls` when creating the payment link, the customer is redirected to your URLs instead of Quidkey's default pages. Quidkey appends query parameters to help you correlate the redirect:
+
+| Parameter | Description |
+|-----------|-------------|
+| `status` | `success` or `failed` |
+| `payment_reference` | The payment reference from the link |
+| `order_id` | Your order ID (if provided at creation) |
+
+Example redirect after successful payment:
+```
+https://yoursite.com/payment/success?status=success&payment_reference=INV-2024-001&order_id=ORD-123
+```
+
+<Note>
+Custom redirects are informational only — do not use them to confirm payment status. Always use webhooks or the API to verify that payment was actually completed. A customer could manually navigate to your success URL without paying.
 </Note>
 
 ## Webhook Notifications
@@ -219,11 +239,11 @@ Payment link endpoints return consistent error responses:
 
 <CardGroup cols={2}>
 <Card title="Overview" icon="link" href="/guides/payment-links/overview">
-  Payment Links overview and lifecycle
+  Hosted Checkout overview and lifecycle
 </Card>
 
-<Card title="Create a Payment Link" icon="plus" href="/guides/payment-links/create">
-  Generate and share your first payment link
+<Card title="Create a Checkout Link" icon="plus" href="/guides/payment-links/create">
+  Generate and share your first checkout link
 </Card>
 
 <Card title="Webhook Setup" icon="webhook" href="/api-reference/webhook/register-or-update-a-merchant-webhook-url">

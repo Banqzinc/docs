@@ -40,7 +40,7 @@ flowchart LR
 </Step>
 
 <Step title="Payment complete">
-  After authorization, the customer is redirected to a success or failure page. You receive a webhook notification with the payment result.
+  After authorization, the customer is redirected to a success or failure page. If the merchant provided custom `redirect_urls` when creating the link, the customer is sent to the merchant's site instead of Quidkey's default pages. You receive a webhook notification with the payment result regardless of redirect configuration.
 </Step>
 </Steps>
 
@@ -91,7 +91,7 @@ The hosted checkout page is designed with security in mind:
   Track payment status and manage your links
 </Card>
 
-<Card title="Create a Payment Link" icon="plus" href="/guides/payment-links/create">
-  Generate and share your first payment link
+<Card title="Create a Checkout Link" icon="plus" href="/guides/payment-links/create">
+  Generate and share your first checkout link
 </Card>
 </CardGroup>
