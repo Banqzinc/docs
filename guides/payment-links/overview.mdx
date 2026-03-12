@@ -1,14 +1,14 @@
 ---
-title: "Payment Links"
-description: "Collect payments with shareable URLs — no integration required"
+title: "Hosted Checkout"
+description: "Collect payments through a Quidkey-hosted checkout page — no frontend code required"
 icon: "link"
 ---
 
-Payment Links are shareable URLs that direct customers to a Quidkey-hosted checkout page for bank-to-bank payments. Create a link, send it to your customer via email, SMS, or any messaging channel, and get paid — no frontend integration needed.
+Hosted Checkout lets you collect payments through a Quidkey-hosted checkout page for bank-to-bank payments. Create a checkout link, send it to your customer via email, SMS, or any messaging channel, and get paid — no frontend integration needed.
 
 <CardGroup cols={2}>
-<Card title="Create a Payment Link" icon="plus" href="/guides/payment-links/create">
-  Create and share your first payment link via the API
+<Card title="Create a Checkout Link" icon="plus" href="/guides/payment-links/create">
+  Create and share your first checkout link via the API
 </Card>
 
 <Card title="Checkout Experience" icon="browser" href="/guides/payment-links/checkout-experience">
@@ -24,11 +24,11 @@ Payment Links are shareable URLs that direct customers to a Quidkey-hosted check
 </Card>
 </CardGroup>
 
-## When to Use Payment Links
+## When to Use Hosted Checkout
 
-Payment Links and the Embedded Flow serve different integration needs:
+Hosted Checkout and the Embedded Flow serve different integration needs:
 
-| | **Payment Links** | **Embedded Flow** |
+| | **Hosted Checkout** | **Embedded Flow** |
 |---|---|---|
 | **Best for** | Invoicing, ad-hoc payments, no-code scenarios | E-commerce checkouts, in-app payments |
 | **Integration effort** | API call to create link, then share the URL | Embed iframe, handle postMessage events |
@@ -37,7 +37,7 @@ Payment Links and the Embedded Flow serve different integration needs:
 | **Use case** | B2B invoices, service payments, cross-border pay-ins | Online stores, subscription platforms |
 
 <Tip>
-**Already using the Embedded Flow?** You can use both. Payment Links are ideal for scenarios where you need to collect a payment outside your checkout page — like sending an invoice link via email.
+**Already using the Embedded Flow?** You can use both. Hosted Checkout is ideal for scenarios where you need to collect a payment outside your checkout page — like sending an invoice link via email.
 </Tip>
 
 ## How It Works
@@ -81,7 +81,7 @@ Every payment link has a status that tracks its progress:
 ## Key Features
 
 - **Shareable URLs** — Send via any channel: email, SMS, WhatsApp, messaging apps
-- **Hosted checkout** — Quidkey-branded checkout page, no frontend code needed
+- **Hosted checkout page** — Quidkey-branded checkout page, no frontend code needed. By default, customers see a Quidkey thank you or failure page after payment. Optionally redirect them back to your own site with custom `redirect_urls`.
 - **Configurable expiry** — Default 7 days, or set a custom duration
 - **Single-use and reusable** — One-time payment links or persistent links for repeated use
 - **View tracking** — See how many times a link has been opened
@@ -92,7 +92,7 @@ Every payment link has a status that tracks its progress:
 
 <Steps>
 <Step title="Create your first payment link">
-  Follow the [Create a Payment Link](/guides/payment-links/create) guide to generate and share your first link.
+  Follow the [Create a Checkout Link](/guides/payment-links/create) guide to generate and share your first link.
 </Step>
 
 <Step title="Understand the checkout experience">

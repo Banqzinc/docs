@@ -1,10 +1,10 @@
 ---
-title: "Create a Payment Link"
-description: "Generate a shareable payment URL and send it to your customer"
+title: "Create a Checkout Link"
+description: "Generate a shareable checkout URL and send it to your customer"
 icon: "plus"
 ---
 
-Create a payment link in one API call, then share the URL with your customer via any channel.
+Create a checkout link in one API call, then share the URL with your customer via any channel.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ access_token = response.json()['data']['access_token']
 
 </CodeGroup>
 
-## Step 2: Create the Payment Link
+## Step 2: Create the Checkout Link
 
 Call `POST /api/v1/payment-links` with the payment details.
 
@@ -156,9 +156,97 @@ When the customer clicks the link, they'll see a Quidkey-hosted checkout page wh
 | `order.locale` | string | No | BCP-47 locale tag (e.g., `en`, `pt`, `es`). Default: `en` |
 | `merchant_id` | string | No | Required for Partner authentication. UUID of the target merchant. |
 | `metadata` | object | No | Arbitrary key-value pairs to attach to the link |
+| `redirect_urls` | object | No | Custom redirect URLs after payment. See [Redirect URLs](#redirect-urls). |
+| `redirect_urls.success_url` | string | Conditional | URL to redirect customer to after successful payment. Required if `redirect_urls` is provided. |
+| `redirect_urls.failure_url` | string | Conditional | URL to redirect customer to after failed payment. Required if `redirect_urls` is provided. |
 
 <Note>
 **Amount format:** Use minor units (cents). `1000` = €10.00, `5000` = €50.00. This is the same format used by Stripe and the Embedded Flow.
+</Note>
+
+## Redirect URLs
+
+By default, after payment customers are redirected to a Quidkey-hosted thank you or failure page. To send customers back to your own site, provide custom redirect URLs at creation time.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://core.quidkey.com/api/v1/payment-links' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "order": {
+      "amount": 5000,
+      "currency": "EUR",
+      "payment_reference": "INV-2024-001"
+    },
+    "redirect_urls": {
+      "success_url": "https://yoursite.com/payment/success",
+      "failure_url": "https://yoursite.com/payment/failure"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://core.quidkey.com/api/v1/payment-links', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    order: {
+      amount: 5000,
+      currency: 'EUR',
+      payment_reference: 'INV-2024-001'
+    },
+    redirect_urls: {
+      success_url: 'https://yoursite.com/payment/success',
+      failure_url: 'https://yoursite.com/payment/failure'
+    }
+  })
+});
+```
+
+```python Python
+response = requests.post(
+    'https://core.quidkey.com/api/v1/payment-links',
+    headers={'Authorization': f'Bearer {access_token}'},
+    json={
+        'order': {
+            'amount': 5000,
+            'currency': 'EUR',
+            'payment_reference': 'INV-2024-001'
+        },
+        'redirect_urls': {
+            'success_url': 'https://yoursite.com/payment/success',
+            'failure_url': 'https://yoursite.com/payment/failure'
+        }
+    }
+)
+```
+
+</CodeGroup>
+
+When custom redirect URLs are provided, Quidkey appends query parameters so you can correlate the redirect on your side:
+
+| Parameter | Description |
+|-----------|-------------|
+| `status` | `success` or `failed` |
+| `payment_reference` | The payment reference from the link |
+| `order_id` | Your order ID (if provided at creation) |
+
+For example, after a successful payment the customer would be redirected to:
+```
+https://yoursite.com/payment/success?status=success&payment_reference=INV-2024-001
+```
+
+<Warning>
+Both `success_url` and `failure_url` must be provided together. You cannot set only one. If `redirect_urls` is omitted, customers are redirected to Quidkey's default pages.
+</Warning>
+
+<Note>
+Webhooks still fire regardless of redirect URL configuration. Custom redirects only affect where the customer's browser is sent — your backend still receives the webhook notification as normal. See [After Payment](/guides/payment-links/after-payment) for webhook details.
 </Note>
 
 ## Link Types
@@ -191,6 +279,6 @@ When a customer opens an expired link, the checkout page displays an expiry mess
 </Card>
 
 <Card title="Overview" icon="link" href="/guides/payment-links/overview">
-  Payment Links overview and lifecycle
+  Hosted Checkout overview and lifecycle
 </Card>
 </CardGroup>

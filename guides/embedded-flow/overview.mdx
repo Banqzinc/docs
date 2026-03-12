@@ -40,7 +40,7 @@ This guide assumes you already have a **Stripe Payment Element** integrated on y
 
 ## When to Use the Embedded Flow
 
-| | **Embedded Flow (with Stripe)** | **Payment Links** |
+| | **Embedded Flow (with Stripe)** | **Hosted Checkout** |
 |---|---|---|
 | **Best for** | Merchants with an existing Stripe checkout | Invoicing, ad-hoc payments, no-code scenarios |
 | **Integration effort** | Embed iframe, handle postMessage events, route Pay button | One API call to create a link, then share the URL |
@@ -49,7 +49,7 @@ This guide assumes you already have a **Stripe Payment Element** integrated on y
 | **Use case** | E-commerce with Stripe, subscription platforms | B2B invoices, service payments, cross-border pay-ins |
 
 <Tip>
-**Need both?** You can use the Embedded Flow for your checkout page and Payment Links for invoice emails — they share the same backend API and webhook infrastructure.
+**Need both?** You can use the Embedded Flow for your checkout page and Hosted Checkout for invoice emails — they share the same backend API and webhook infrastructure.
 </Tip>
 
 ## How It Works
