@@ -58,6 +58,13 @@
               "guides/payment-links/checkout-experience",
               "guides/payment-links/after-payment"
             ]
+          },
+          {
+            "group": "Payouts",
+            "pages": [
+              "guides/payouts/overview",
+              "guides/payouts/export"
+            ]
           }
         ]
       },
