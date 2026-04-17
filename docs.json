@@ -130,7 +130,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "https://merchants.quidkey.com"
+      "href": "https://console.quidkey.com"
     }
   },
   "contextual": {
