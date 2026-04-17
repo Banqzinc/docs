@@ -1,10 +1,24 @@
 ---
 title: "Export Transactions"
-description: "Download a CSV of all transactions in a payout batch for reconciliation"
-icon: "file-csv"
+description: "Download transaction data as CSV or Excel for payout reconciliation"
+icon: "file-arrow-down"
 ---
 
-Export a detailed CSV of every transaction in a payout batch. The export includes amounts, fees, exchange rates, and customer details — everything your finance team needs to reconcile payouts against your accounting records.
+Export the transactions behind any payout batch as **CSV** or **Excel** (`.xlsx`). The export carries every field your finance team needs to reconcile against bank statements and accounting records: amounts, fee breakdowns, exchange rates, refund status, and timestamps.
+
+Both formats are produced by the same transaction search endpoint. The output format is chosen by the `Accept` header; the request body selects which transactions you want. That makes reconciliation flexible: filter by payout batch for monthly close, or by date range to generate quarterly reports.
+
+## Choosing CSV or Excel
+
+<CardGroup cols={2}>
+<Card title="CSV" icon="file-lines">
+  Best for scripts, accounting imports (Xero, QuickBooks), and pipelines. Plain text, easy to diff and grep.
+</Card>
+
+<Card title="Excel (`.xlsx`)" icon="file-excel">
+  Best for finance teams opening files directly. Numeric columns keep their formatting, no import wizard.
+</Card>
+</CardGroup>
 
 ## Exporting from the console
 
@@ -13,40 +27,78 @@ Export a detailed CSV of every transaction in a payout batch. The export include
   Navigate to **Payouts** in the merchant console and click the batch you want to export.
 </Step>
 
-<Step title="Click Export CSV">
-  Click the **Export CSV** button on the detail page. The download starts immediately.
+<Step title="Click Export">
+  Click the **Export** button on the detail page and choose either **CSV** or **Excel**. The download starts immediately.
 </Step>
 </Steps>
 
-The file is named `payout-{payment_reference}-transactions.csv` using the batch's payment reference.
+Files are named `payout-{batchId}-transactions.csv` or `.xlsx` on console exports. When you export from the transactions search page directly, the default filename is `transactions-{YYYY-MM-DD}.{csv|xlsx}`.
+
+<Tip>
+The same **Export** dropdown is on the transactions search page itself. Any filter you have applied (status, date range, currency, customer email) is honoured. That means you can generate a targeted export without needing a payout batch.
+</Tip>
 
 ## Exporting via API
 
-You can also export programmatically using the API.
+Both formats live on the existing transaction search endpoint. You choose the format with the `Accept` header and the rows with the request body.
 
-### Prerequisites
+### Endpoint
 
-- A Quidkey merchant account with `client_id` and `client_secret`
-- An active access token (see [Authentication](/api-reference/introduction#authentication))
-- The `payout_batch_id` of the batch to export
+```
+POST /api/v1/merchants/{merchantId}/transactions
+```
 
-### Request
+### Headers
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `Authorization` | `Bearer <access_token>` | Standard API auth |
+| `Content-Type` | `application/json` | Request body is JSON |
+| `Accept` | `text/csv` | Returns CSV |
+| `Accept` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | Returns XLSX |
+
+The `Accept` match is case-insensitive. Omitting `Accept` (or sending `application/json`) returns the standard paginated JSON response instead.
+
+### Request body
+
+Any filter supported by transaction search works. For payout reconciliation, filter by batch ID:
+
+```json
+{
+  "search": {
+    "payout_batch_id": { "eq": "550e8400-e29b-41d4-a716-446655440000" }
+  }
+}
+```
+
+Other common filters: `status`, `created_at` range, `currency`, `customer_email.contains`, `order_id.contains`. Combine them freely. See the [API reference](/api-reference/introduction) for the complete search schema.
+
+### Example: CSV
 
 <CodeGroup>
 
 ```bash cURL
-curl -X GET 'https://core.quidkey.com/api/v1/merchants/{merchantId}/payouts/{payoutBatchId}/transactions/export' \
+curl -X POST 'https://core.quidkey.com/api/v1/merchants/{merchantId}/transactions' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
-  -o transactions.csv
+  -H 'Content-Type: application/json' \
+  -H 'Accept: text/csv' \
+  -d '{"search":{"payout_batch_id":{"eq":"<batchId>"}}}' \
+  -o payout-transactions.csv
 ```
 
 ```javascript Node.js
 const response = await fetch(
-  `https://core.quidkey.com/api/v1/merchants/${merchantId}/payouts/${payoutBatchId}/transactions/export`,
+  `https://core.quidkey.com/api/v1/merchants/${merchantId}/transactions`,
   {
+    method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`
-    }
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'text/csv',
+    },
+    body: JSON.stringify({
+      search: { payout_batch_id: { eq: payoutBatchId } },
+    }),
   }
 );
 
@@ -56,9 +108,14 @@ const csv = await response.text();
 ```python Python
 import requests
 
-response = requests.get(
-    f'https://core.quidkey.com/api/v1/merchants/{merchant_id}/payouts/{payout_batch_id}/transactions/export',
-    headers={'Authorization': f'Bearer {access_token}'}
+response = requests.post(
+    f'https://core.quidkey.com/api/v1/merchants/{merchant_id}/transactions',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+        'Accept': 'text/csv',
+    },
+    json={'search': {'payout_batch_id': {'eq': payout_batch_id}}},
 )
 
 csv_content = response.text
@@ -66,39 +123,106 @@ csv_content = response.text
 
 </CodeGroup>
 
-The response is a `text/csv` file with a `Content-Disposition` header for the filename.
+### Example: Excel (`.xlsx`)
 
-## CSV field reference
+Swap the `Accept` header and treat the response body as binary:
 
-Each row in the CSV represents one transaction in the batch.
+<CodeGroup>
 
-| Column | Description | Example |
-|--------|-------------|---------|
-| **Transaction Number** | Unique transaction identifier | `TXN-20240401-001` |
-| **Type** | `payment` or `refund` | `payment` |
-| **Status** | Transaction status | `completed` |
-| **Amount** | Transaction amount in the original currency | `50.00` |
-| **Currency** | Original transaction currency (ISO 4217) | `EUR` |
-| **Converted Amount** | Amount in the payout currency after conversion | `43.50` |
-| **Payout Currency** | Currency of the payout batch | `GBP` |
-| **Exchange Rate** | Conversion rate applied (empty if same currency) | `0.87` |
-| **Fee Total** | Total fees deducted from this transaction | `1.25` |
-| **Fee Currency** | Currency of the fees | `GBP` |
-| **Fee Details** | Breakdown of individual fees, pipe-separated | `processing:0.75\|scheme:0.50` |
-| **Customer Email** | Customer's email address (if provided) | `jane@example.com` |
-| **Order ID** | Your internal order reference (if provided at payment creation) | `ORD-12345` |
-| **Created At** | When the transaction was created (ISO 8601) | `2024-04-01T10:30:00Z` |
-| **Paid Out At** | When the payout was executed (ISO 8601) | `2024-04-05T14:00:00Z` |
+```bash cURL
+curl -X POST 'https://core.quidkey.com/api/v1/merchants/{merchantId}/transactions' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' \
+  -d '{"search":{"payout_batch_id":{"eq":"<batchId>"}}}' \
+  -o payout-transactions.xlsx
+```
+
+```javascript Node.js
+import { writeFile } from 'node:fs/promises';
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+const response = await fetch(
+  `https://core.quidkey.com/api/v1/merchants/${merchantId}/transactions`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'Accept': XLSX_MIME,
+    },
+    body: JSON.stringify({
+      search: { payout_batch_id: { eq: payoutBatchId } },
+    }),
+  }
+);
+
+const buffer = Buffer.from(await response.arrayBuffer());
+await writeFile('payout-transactions.xlsx', buffer);
+```
+
+```python Python
+import requests
+
+XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+response = requests.post(
+    f'https://core.quidkey.com/api/v1/merchants/{merchant_id}/transactions',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+        'Accept': XLSX_MIME,
+    },
+    json={'search': {'payout_batch_id': {'eq': payout_batch_id}}},
+)
+
+with open('payout-transactions.xlsx', 'wb') as f:
+    f.write(response.content)
+```
+
+</CodeGroup>
 
 <Note>
-**Amounts are in decimal format.** The CSV converts minor units to decimal for readability — `5000` cents becomes `50.00`. This differs from the API, which uses minor units.
+The response carries `Content-Disposition: attachment; filename="..."` for browser downloads. Server-side callers can ignore it and name the file themselves.
+</Note>
+
+## Response columns
+
+Each row represents one transaction that matched the search filters.
+
+| # | Column | Description | Example |
+|---|--------|-------------|---------|
+| 1 | **Transaction Number** | Unique transaction identifier | `TXN-20240401-001` |
+| 2 | **Status** | Normalised merchant-facing status | `Completed` |
+| 3 | **Amount** | Original transaction amount in decimal | `50.00` |
+| 4 | **Currency** | Original currency (ISO 4217) | `EUR` |
+| 5 | **Converted Amount** | Amount after conversion to payout currency | `43.50` |
+| 6 | **Payout Currency** | Currency of the payout batch | `GBP` |
+| 7 | **Exchange Rate** | Rate applied (empty for same-currency payouts) | `0.87` |
+| 8 | **Fee Total** | Sum of all fees deducted | `1.25` |
+| 9 | **Fee Currency** | Currency the fees were charged in | `GBP` |
+| 10 | **Fee Details** | Per-fee breakdown, pipe-separated | `processing:0.75\|scheme:0.50` |
+| 11 | **Refund Status** | `Refunding`, `Partially Refunded`, `Fully Refunded`, or empty | `Partially Refunded` |
+| 12 | **Refunded Amount** | Total refunded so far, in the original currency | `10.00` |
+| 13 | **Customer Email** | Customer email address (if provided) | `jane@example.com` |
+| 14 | **Order ID** | Your internal order reference | `ORD-12345` |
+| 15 | **Created At** | ISO 8601 timestamp | `2024-04-01T10:30:00Z` |
+| 16 | **Paid Out At** | ISO 8601 timestamp (empty until the payout executes) | `2024-04-05T14:00:00Z` |
+
+<Note>
+**Amounts are decimal.** The export converts minor units to decimal (`5000` cents becomes `50.00`), which differs from the JSON API where amounts stay in minor units. This is intentional: exports are read by humans and accounting tools, so the representation matches what you'd expect to see in a ledger.
+</Note>
+
+<Note>
+**Refund columns** are populated only for payment transactions with completed refunds. For refund transactions themselves, or payments with no refunds, both columns are blank.
 </Note>
 
 ## Understanding fees
 
-The **Fee Total** column shows the sum of all fees for a transaction. The **Fee Details** column provides the breakdown, formatted as `type:amount` pairs separated by pipes (`|`).
+The **Fee Total** column is the sum of every fee for the transaction. The **Fee Details** column gives the breakdown as `type:amount` pairs separated by pipes (`|`).
 
-For example, a fee details value of `processing:0.75|scheme:0.50` means:
+Example: a `Fee Details` value of `processing:0.75|scheme:0.50` resolves to:
 
 | Fee type | Amount |
 |----------|--------|
@@ -106,23 +230,38 @@ For example, a fee details value of `processing:0.75|scheme:0.50` means:
 | Scheme | 0.50 |
 | **Total** | **1.25** |
 
+## Row limits and truncation
+
+An export is capped at **10,000 rows per request**. When the filter matches more than that, the export still returns (with the first 10,000 rows) and sets two response headers so callers know it happened:
+
+| Header | Value | Meaning |
+|--------|-------|---------|
+| `X-Export-Truncated` | `true` | The match exceeded the row cap |
+| `X-Export-Total` | Integer | The full match count |
+
+The console surfaces truncation as a warning toast after the download completes. API callers should inspect the headers and, if truncated, narrow the filter window (by date, status, or currency) and retry until each window fits under the cap.
+
+<Warning>
+Never assume an export is complete without checking `X-Export-Truncated`. A truncated payout export that's silently imported into accounting will under-report revenue.
+</Warning>
+
 ## Tips for reconciliation
 
 <AccordionGroup>
-<Accordion title="Matching payouts to bank statements">
-  Use the **payment reference** from the payout batch detail page. This reference appears on your bank statement and uniquely identifies the payout.
+<Accordion title="Match payouts to bank statements">
+  Use the **payment reference** from the payout batch detail page. This reference appears on your bank statement and uniquely identifies the transfer.
 </Accordion>
 
-<Accordion title="Linking transactions to orders">
-  The **Order ID** column maps to the `order_id` you provided when creating the payment request. Use this to match CSV rows to your invoices or order management system.
+<Accordion title="Link transactions to orders">
+  The **Order ID** column maps to the `order_id` you provided when creating the payment request. Use this to match exported rows to your invoices or order management system.
 </Accordion>
 
-<Accordion title="Handling cross-currency payouts">
-  For cross-border payments, the **Amount** and **Currency** columns show the original transaction values, while **Converted Amount** and **Payout Currency** show what was actually paid out. The **Exchange Rate** column shows the conversion rate applied.
+<Accordion title="Handle cross-currency payouts">
+  For cross-border payments, **Amount** and **Currency** show the original transaction values. **Converted Amount** and **Payout Currency** show what was actually paid out. **Exchange Rate** is the rate applied at conversion time, which may differ from spot rates on the payout date.
 </Accordion>
 
-<Accordion title="Importing into accounting software">
-  The CSV is compatible with standard accounting imports (Xero, QuickBooks, Excel). The decimal amounts and ISO date formats are designed for direct import without transformation.
+<Accordion title="Reconcile refunds">
+  **Refund Status** and **Refunded Amount** let you identify transactions that were fully or partially refunded within the batch. Subtract **Refunded Amount** from the gross **Amount** to get net revenue per transaction.
 </Accordion>
 </AccordionGroup>
 
@@ -130,10 +269,10 @@ For example, a fee details value of `processing:0.75|scheme:0.50` means:
 
 <CardGroup cols={2}>
 <Card title="Payout overview" icon="receipt" href="/guides/payouts/overview">
-  How payouts work and the reconciliation workflow
+  How payouts work and the full reconciliation workflow
 </Card>
 
-<Card title="API Reference" icon="code" href="/api-reference/introduction">
-  Full endpoint documentation
+<Card title="API reference" icon="code" href="/api-reference/introduction">
+  Full endpoint and search schema documentation
 </Card>
 </CardGroup>

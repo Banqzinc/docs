@@ -34,7 +34,7 @@ The iframe adjusts its height based on available payment methods and open bank l
 - **Base**: `payment_method_count x 54px` (includes 1px border per method)
 - **With drawer open**: Additional 263px when bank selection lists are open
 - **Standard markets**: 2 payment methods (108px base)
-- **Enhanced markets**: 3+ payment methods (162px+ base) — e.g., Portugal with Multibanco
+- **Enhanced markets**: 3+ payment methods (162px+ base), e.g., Portugal with Multibanco
 
 **JavaScript:**
 
@@ -134,15 +134,15 @@ When the customer interacts with the Stripe Payment Element again, update `curre
 ## Payment Schemes
 
 The iframe supports multiple payment schemes automatically based on the customer's country:
-- **SEPA** — EU-wide credit transfers
-- **Faster Payments** — UK instant payments
-- **Multibanco** — Portuguese payment method
+- **SEPA**: EU-wide credit transfers
+- **Faster Payments**: UK instant payments
+- **Multibanco**: Portuguese payment method
 
 <Tip>
 **Payment Scheme Values:**
-- `null` or `undefined` — use default scheme for customer's country
-- `"MULTIBANCO"` — user explicitly selected Multibanco
-- `"SEPA_CREDIT_TRANSFER"` — user explicitly selected SEPA
+- `null` or `undefined`: use default scheme for customer's country
+- `"MULTIBANCO"`: user explicitly selected Multibanco
+- `"SEPA_CREDIT_TRANSFER"`: user explicitly selected SEPA
 - Future schemes like `"PIX"` and `"UPI"` will work automatically
 </Tip>
 
@@ -223,11 +223,11 @@ After the customer authenticates with their bank, they're redirected to your `su
 </Step>
 
 <Step title="Test Quidkey path">
-  Click the Quidkey bank option — the Stripe Payment Element should collapse. Your purchase button should be enabled. Click Purchase, authenticate with any credentials (demo mode), and verify you're redirected to your success URL.
+  Click the Quidkey bank option. The Stripe Payment Element should collapse. Your purchase button should be enabled. Click Purchase, authenticate with any credentials (demo mode), and verify you're redirected to your success URL.
 </Step>
 
 <Step title="Test Stripe path">
-  Reload and interact with the Stripe Payment Element instead — the Quidkey selection should clear. Confirm the Stripe payment flow works as before.
+  Reload and interact with the Stripe Payment Element instead. The Quidkey selection should clear. Confirm the Stripe payment flow works as before.
 </Step>
 
 <Step title="Verify with webhook">
@@ -243,7 +243,7 @@ After the customer authenticates with their bank, they're redirected to your `su
 </Card>
 
 <Card title="API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
-  Test API calls in your browser — no setup required
+  Test API calls in your browser. No setup required
 </Card>
 </CardGroup>
 

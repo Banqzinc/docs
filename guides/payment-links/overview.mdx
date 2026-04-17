@@ -1,10 +1,10 @@
 ---
 title: "Hosted Checkout"
-description: "Collect payments through a Quidkey-hosted checkout page — no frontend code required"
+description: "Collect payments through a Quidkey-hosted checkout page. No frontend code required"
 icon: "link"
 ---
 
-Hosted Checkout lets you collect payments through a Quidkey-hosted checkout page for bank-to-bank payments. Create a checkout link, send it to your customer via email, SMS, or any messaging channel, and get paid — no frontend integration needed.
+Hosted Checkout lets you collect payments through a Quidkey-hosted checkout page for bank-to-bank payments. Create a checkout link, send it to your customer via email, SMS, or any messaging channel, and get paid. No frontend integration needed.
 
 <CardGroup cols={2}>
 <Card title="Create a Checkout Link" icon="plus" href="/guides/payment-links/create">
@@ -37,7 +37,7 @@ Hosted Checkout and the Embedded Flow serve different integration needs:
 | **Use case** | B2B invoices, service payments, cross-border pay-ins | Online stores, subscription platforms |
 
 <Tip>
-**Already using the Embedded Flow?** You can use both. Hosted Checkout is ideal for scenarios where you need to collect a payment outside your checkout page — like sending an invoice link via email.
+**Already using the Embedded Flow?** You can use both. Hosted Checkout is ideal for scenarios where you need to collect a payment outside your checkout page, like sending an invoice link via email.
 </Tip>
 
 ## How It Works
@@ -75,18 +75,18 @@ Every payment link has a status that tracks its progress:
 | **CANCELLED** | Manually cancelled via API. |
 
 <Note>
-**Single-use vs Reusable:** By default, links are single-use — they transition to USED when a customer completes payment. Set `link_type: "reusable"` to create links that stay ACTIVE for repeated payments (useful for donation pages or recurring invoices).
+**Single-use vs Reusable:** By default, links are single-use: they transition to USED when a customer completes payment. Set `link_type: "reusable"` to create links that stay ACTIVE for repeated payments (useful for donation pages or recurring invoices).
 </Note>
 
 ## Key Features
 
-- **Shareable URLs** — Send via any channel: email, SMS, WhatsApp, messaging apps
-- **Hosted checkout page** — Quidkey-branded checkout page, no frontend code needed. By default, customers see a Quidkey thank you or failure page after payment. Optionally redirect them back to your own site with custom `redirect_urls`.
-- **Configurable expiry** — Default 7 days, or set a custom duration
-- **Single-use and reusable** — One-time payment links or persistent links for repeated use
-- **View tracking** — See how many times a link has been opened
-- **Recoverable URLs** — Copy the link URL at any time from the Console or API (encrypted token storage)
-- **Link-to-transaction** — When a link is used, navigate directly to the resulting transaction
+- **Shareable URLs**: send via any channel: email, SMS, WhatsApp, messaging apps
+- **Hosted checkout page**: Quidkey-branded checkout page, no frontend code needed. By default, customers see a Quidkey thank you or failure page after payment. Optionally redirect them back to your own site with custom `redirect_urls`.
+- **Configurable expiry**: default 7 days, or set a custom duration
+- **Single-use and reusable**: one-time payment links or persistent links for repeated use
+- **View tracking**: see how many times a link has been opened
+- **Recoverable URLs**: copy the link URL at any time from the Console or API (encrypted token storage)
+- **Link-to-transaction**: when a link is used, navigate directly to the resulting transaction
 
 ## Next Steps
 

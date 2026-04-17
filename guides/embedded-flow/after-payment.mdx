@@ -9,11 +9,11 @@ After a customer completes a payment, Quidkey delivers the result to your backen
 ## Redirect Handling
 
 After bank authentication, the customer is redirected to the URL you specified when [creating the payment request](/guides/embedded-flow/create):
-- **Success** — redirected to `success_url`
-- **Failure / Cancel** — redirected to `failure_url`
+- **Success**: redirected to `success_url`
+- **Failure / Cancel**: redirected to `failure_url`
 
 <Warning>
-Do not rely solely on the redirect to confirm payment. Always verify payment status via the webhook — redirects can fail or be interrupted.
+Do not rely solely on the redirect to confirm payment. Always verify payment status via the webhook. Redirects can fail or be interrupted.
 </Warning>
 
 ## Webhook Setup
@@ -42,7 +42,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret' \
 ```
 
 <Warning>
-The secret is returned **once** — store it safely in a secure vault (AWS Secrets Manager, HashiCorp Vault, etc.).
+The secret is returned **once**. Store it safely in a secure vault (AWS Secrets Manager, HashiCorp Vault, etc.).
 </Warning>
 
 <Tip>
@@ -197,7 +197,7 @@ app.post('/webhooks/quidkey', (req, res) => {
 ```
 
 <Info>
-**Retry behavior:** Quidkey retries for up to **3 days** with exponential backoff until your endpoint returns any `2xx` status. Events may be delivered out of order or duplicated — de-duplicate using the top-level `id` field.
+**Retry behavior:** Quidkey retries for up to **3 days** with exponential backoff until your endpoint returns any `2xx` status. Events may be delivered out of order or duplicated, so de-duplicate using the top-level `id` field.
 </Info>
 
 ## Fee Handling
@@ -205,9 +205,9 @@ app.post('/webhooks/quidkey', (req, res) => {
 Quidkey automatically calculates and applies fees for successful transactions. Fee information is included in webhook payloads for merchant accounting and billing reconciliation.
 
 **Fee types:**
-- **Percentage fees** — based on transaction amount (e.g., 1.5% of €100 = €1.50)
-- **Fixed fees** — flat rate per transaction (e.g., €1.00 per transaction)
-- **Currency-specific** — fees are calculated in the same currency as the transaction
+- **Percentage fees**: based on transaction amount (e.g., 1.5% of €100 = €1.50)
+- **Fixed fees**: flat rate per transaction (e.g., €1.00 per transaction)
+- **Currency-specific**: fees are calculated in the same currency as the transaction
 
 Each fee in the `fees_breakdown` array contains:
 

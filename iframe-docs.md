@@ -855,7 +855,7 @@ We send a Stripe-style envelope so that existing tooling can be reused.
 The HMAC is SHA-256 over `"${timestamp}.${raw_body}"`, keyed by your **webhook signing secret**.
 
 ### 3.4 Verifying signatures
-The `X-Signature` header lets you confirm that the webhook really came from Quidkey and that the payload was not tampered with in transit. Always compute the HMAC over the *raw* body and compare it to `v1`—this protects both authenticity and integrity.
+The `X-Signature` header lets you confirm that the webhook really came from Quidkey and that the payload was not tampered with in transit. Always compute the HMAC over the *raw* body and compare it to `v1`. This protects both authenticity and integrity.
 
 **Utilise Stripe helper**:
 

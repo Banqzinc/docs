@@ -4,7 +4,7 @@ description: "Add Quidkey bank payments alongside your existing Stripe Payment E
 icon: "credit-card"
 ---
 
-The Embedded Flow adds Quidkey's bank payment option alongside your existing Stripe Payment Element. Customers see both payment methods on your checkout page and choose between card payments (Stripe) or bank transfers (Quidkey) — all without leaving your site.
+The Embedded Flow adds Quidkey's bank payment option alongside your existing Stripe Payment Element. Customers see both payment methods on your checkout page and choose between card payments (Stripe) or bank transfers (Quidkey), all without leaving your site.
 
 <Note>
 This guide assumes you already have a **Stripe Payment Element** integrated on your checkout page. You're adding Quidkey alongside Stripe, not replacing it.
@@ -24,7 +24,7 @@ This guide assumes you already have a **Stripe Payment Element** integrated on y
 </Card>
 
 <Card title="API Playground" icon="flask" href="/api-reference/embedded/create-a-payment-request-and-return-a-payment_token-for-iframe-flow">
-  Test creating a payment request in your browser — no setup required
+  Test creating a payment request in your browser. No setup required
 </Card>
 </CardGroup>
 
@@ -35,7 +35,7 @@ This guide assumes you already have a **Stripe Payment Element** integrated on y
 - [ ] HTTPS enabled on your checkout page
 
 <Info>
-**No Stripe changes required** — your existing Stripe integration stays exactly as it is. You're adding Quidkey alongside, not replacing anything.
+**No Stripe changes required.** Your existing Stripe integration stays exactly as it is. You're adding Quidkey alongside, not replacing anything.
 </Info>
 
 ## When to Use the Embedded Flow
@@ -49,7 +49,7 @@ This guide assumes you already have a **Stripe Payment Element** integrated on y
 | **Use case** | E-commerce with Stripe, subscription platforms | B2B invoices, service payments, cross-border pay-ins |
 
 <Tip>
-**Need both?** You can use the Embedded Flow for your checkout page and Hosted Checkout for invoice emails — they share the same backend API and webhook infrastructure.
+**Need both?** You can use the Embedded Flow for your checkout page and Hosted Checkout for invoice emails. They share the same backend API and webhook infrastructure.
 </Tip>
 
 ## How It Works
@@ -94,13 +94,13 @@ sequenceDiagram
 
 ## Key Features
 
-- **Works alongside Stripe** — Customers choose between card (Stripe) or bank transfer (Quidkey) on the same checkout page
-- **Mutual exclusion** — When a customer selects Quidkey, the Stripe Payment Element collapses, and vice versa
-- **Bank prediction** — Quidkey automatically predicts and pre-selects the customer's bank
-- **Multiple payment schemes** — SEPA, Faster Payments, Multibanco, and more supported automatically
-- **Dynamic amounts** — Update the payment amount after creation (e.g., shipping costs, discounts)
-- **Dynamic height** — Iframe adjusts height automatically based on available payment methods
-- **Rewards** — Optional loyalty rewards displayed to customers during checkout
+- **Works alongside Stripe**: customers choose between card (Stripe) or bank transfer (Quidkey) on the same checkout page
+- **Mutual exclusion**: when a customer selects Quidkey, the Stripe Payment Element collapses, and vice versa
+- **Bank prediction**: Quidkey automatically predicts and pre-selects the customer's bank
+- **Multiple payment schemes**: SEPA, Faster Payments, Multibanco, and more supported automatically
+- **Dynamic amounts**: update the payment amount after creation (e.g., shipping costs, discounts)
+- **Dynamic height**: iframe adjusts height automatically based on available payment methods
+- **Rewards**: optional loyalty rewards displayed to customers during checkout
 
 ## Next Steps
 

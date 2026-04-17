@@ -131,17 +131,17 @@ print(f"Expires at: {data['expires_at']}")
 ```
 
 <Check>
-Save the `payment_link_url` — this is the URL you'll share with your customer. The token in the URL is only returned once at creation time.
+Save the `payment_link_url`. This is the URL you'll share with your customer. The token in the URL is only returned once at creation time.
 </Check>
 
 ## Step 3: Share the Link
 
 Send the `payment_link_url` to your customer through any channel:
 
-- **Email** — Include in invoice emails or payment reminders
-- **SMS** — Send a short message with the link
-- **Messaging apps** — WhatsApp, Telegram, or any chat platform
-- **In-person** — Display as text or generate a QR code
+- **Email**: include in invoice emails or payment reminders
+- **SMS**: send a short message with the link
+- **Messaging apps**: WhatsApp, Telegram, or any chat platform
+- **In-person**: display as text or generate a QR code
 
 When the customer clicks the link, they'll see a Quidkey-hosted checkout page where they can complete the payment. See [Checkout Experience](/guides/payment-links/checkout-experience) for details.
 
@@ -246,12 +246,12 @@ Both `success_url` and `failure_url` must be provided together. You cannot set o
 </Warning>
 
 <Note>
-Webhooks still fire regardless of redirect URL configuration. Custom redirects only affect where the customer's browser is sent — your backend still receives the webhook notification as normal. See [After Payment](/guides/payment-links/after-payment) for webhook details.
+Webhooks still fire regardless of redirect URL configuration. Custom redirects only affect where the customer's browser is sent. Your backend still receives the webhook notification as normal. See [After Payment](/guides/payment-links/after-payment) for webhook details.
 </Note>
 
 ## Link Types
 
-By default, payment links are **single-use** — they transition to `USED` after a customer completes payment. You can also create **reusable** links that stay active for multiple payments.
+By default, payment links are **single-use**: they transition to `USED` after a customer completes payment. You can also create **reusable** links that stay active for multiple payments.
 
 <Warning>
 Link type configuration (`single_use` vs `reusable`) is currently set at the system level. Contact support if you need reusable links for your use case (e.g., donation pages, recurring invoices).

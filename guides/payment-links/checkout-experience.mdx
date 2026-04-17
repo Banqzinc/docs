@@ -4,7 +4,7 @@ description: "What your customers see when they open a payment link"
 icon: "browser"
 ---
 
-When a customer clicks a payment link, they're taken to a Quidkey-hosted checkout page. This page collects their details, lets them select their bank, and redirects them to complete the payment — all without any frontend code on your side.
+When a customer clicks a payment link, they're taken to a Quidkey-hosted checkout page. This page collects their details, lets them select their bank, and redirects them to complete the payment, all without any frontend code on your side.
 
 ## Customer Journey
 
@@ -36,7 +36,7 @@ flowchart LR
 </Step>
 
 <Step title="Customer authorizes at their bank">
-  The customer is redirected to their bank's authentication page (or mobile app) to approve the payment. This is the standard Open Banking authorization flow — the bank verifies the customer's identity.
+  The customer is redirected to their bank's authentication page (or mobile app) to approve the payment. This is the standard Open Banking authorization flow: the bank verifies the customer's identity.
 </Step>
 
 <Step title="Payment complete">
@@ -57,7 +57,7 @@ On mobile devices, the layout collapses to a single column with the order summar
 
 ## Re-confirmation Support
 
-If a customer has already submitted the form but hasn't completed the payment (e.g., they closed the bank app), they can return to the same link and update their details. The checkout page allows re-confirmation — submitting the form again creates a new payment request with the updated customer information.
+If a customer has already submitted the form but hasn't completed the payment (e.g., they closed the bank app), they can return to the same link and update their details. The checkout page allows re-confirmation. Submitting the form again creates a new payment request with the updated customer information.
 
 <Tip>
 **Single-use links** remain active until the payment is actually completed (confirmed by the bank callback). This means a customer can retry or update their details as many times as needed before paying.
@@ -80,9 +80,9 @@ Only `ACTIVE` links show the payment form. All other statuses display an informa
 
 The hosted checkout page is designed with security in mind:
 
-- **Token-based access** — Links use 256-bit cryptographic tokens. The token is hashed (SHA-256) before database lookup, so raw tokens are never stored.
-- **No sensitive data exposure** — The public checkout endpoint only returns the merchant name, amount, currency, and reference. Internal IDs, merchant IDs, and tracking data are never exposed.
-- **Bank-grade authentication** — Customers authorize payments directly in their bank app. Quidkey never sees banking credentials.
+- **Token-based access**: links use 256-bit cryptographic tokens. The token is hashed (SHA-256) before database lookup, so raw tokens are never stored.
+- **No sensitive data exposure**: the public checkout endpoint only returns the merchant name, amount, currency, and reference. Internal IDs, merchant IDs, and tracking data are never exposed.
+- **Bank-grade authentication**: customers authorize payments directly in their bank app. Quidkey never sees banking credentials.
 
 ## Next Steps
 

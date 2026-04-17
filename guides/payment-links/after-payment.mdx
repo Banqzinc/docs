@@ -127,7 +127,7 @@ https://yoursite.com/payment/success?status=success&payment_reference=INV-2024-0
 ```
 
 <Note>
-Custom redirects are informational only — do not use them to confirm payment status. Always use webhooks or the API to verify that payment was actually completed. A customer could manually navigate to your success URL without paying.
+Custom redirects are informational only. Do not use them to confirm payment status. Always use webhooks or the API to verify that payment was actually completed. A customer could manually navigate to your success URL without paying.
 </Note>
 
 ## Webhook Notifications
@@ -183,9 +183,9 @@ print(f"Found {result['pagination']['total']} links")
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `status` | string | — | Filter by status: `active`, `used`, `expired`, `cancelled` |
-| `search` | string | — | Search by payment reference or order ID |
-| `merchant_id` | string | — | Filter by merchant ID (partner authentication only) |
+| `status` | string | _none_ | Filter by status: `active`, `used`, `expired`, `cancelled` |
+| `search` | string | _none_ | Search by payment reference or order ID |
+| `merchant_id` | string | _none_ | Filter by merchant ID (partner authentication only) |
 | `page` | integer | `1` | Page number (1-based) |
 | `limit` | integer | `20` | Items per page (max 100) |
 

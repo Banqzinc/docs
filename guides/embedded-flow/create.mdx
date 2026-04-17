@@ -62,9 +62,9 @@ access_token = data['access_token']
 
 <Tip>
 **What you'll receive:**
-- `access_token` — include as `Authorization: Bearer <token>` in subsequent calls
-- `refresh_token` — call `/oauth2/refresh` to get a new access token without re-posting credentials
-- `expires_in` — token validity in seconds (typically 900 = 15 minutes)
+- `access_token`: include as `Authorization: Bearer <token>` in subsequent calls
+- `refresh_token`: call `/oauth2/refresh` to get a new access token without re-posting credentials
+- `expires_in`: token validity in seconds (typically 900 = 15 minutes)
 
 See the [Authentication API reference](/api-reference/endpoint/issue-token) for complete details and interactive playground.
 </Tip>
@@ -211,9 +211,9 @@ Include a `rewards` object to display loyalty rewards during checkout:
 }
 ```
 
-- `extra_rewards` — reward points for this transaction
-- `total_rewards` — total points customer will receive (optional)
-- `description` — text describing the reward (max 255 characters, optional)
+- `extra_rewards`: reward points for this transaction
+- `total_rewards`: total points customer will receive (optional)
+- `description`: text describing the reward (max 255 characters, optional)
 
 Rewards are distributed only on successful payment completion via webhook.
 </Accordion>
