@@ -30,32 +30,36 @@ This guide walks you through connecting your Shopify store to Quidkey and enabli
 
 <Steps>
 <Step title="Sign up">
-  Go to [console.quidkey.com/signup](https://console.quidkey.com/signup) and create your account with your business details.
+  Go to [console.quidkey.com/signup](https://console.quidkey.com/signup) and create your account.
+
+  <Frame>
+    <img src="/images/shopify/signup-page.png" alt="Quidkey signup page" />
+  </Frame>
 </Step>
 
-<Step title="Land on the Install page">
-  After signup, you'll land on the **Install Quidkey** page with Shopify already selected. You're ready to install the Shopify app directly from this page.
+<Step title="Welcome to your Quidkey Dashboard">
+  Your dashboard lists the steps required to finish setting up your account. You can complete them in any order, but we recommend installing the Shopify app first.
+
+  <Frame>
+    <img src="/images/shopify/quidkey-dashboard.png" alt="Quidkey Dashboard with the Go Live checklist" />
+  </Frame>
 </Step>
 </Steps>
 
-<Frame>
-  <img src="/images/shopify/install-quidkey-page.png" alt="Install Quidkey page with Shopify selected and the Shopify plugin button" />
-</Frame>
-
 ## Step 2: Install the Shopify App
 
-You'll be redirected to the Shopify App Store after clicking the Shopify card. You can also open the app directly: [apps.shopify.com/quidkey-checkout](https://apps.shopify.com/quidkey-checkout)
+You can also open the app directly: [apps.shopify.com/quidkey-checkout](https://apps.shopify.com/quidkey-checkout).
 
 <Steps>
 <Step title="Open the App Store listing">
-  Click the **Shopify** card on the Install Quidkey page. Shopify will open in a new tab showing the **Pay by Bank** app.
+  Click the **Shopify** icon on your Quidkey Dashboard. Shopify will open in a new tab showing the **Pay by Bank** app.
 </Step>
 
 <Step title="Install the app">
   Click **Install**.
 
   <Frame>
-    <img src="/images/shopify/shopify-app-store.png" alt="Shopify App Store page for Pay By Bank" />
+    <img src="/images/shopify/shopify-app-store.png" alt="Shopify App Store page for Pay by Bank" />
   </Frame>
 </Step>
 
@@ -63,7 +67,7 @@ You'll be redirected to the Shopify App Store after clicking the Shopify card. Y
   Shopify will show the permissions screen. Click **Install** again to approve.
 
   <Frame>
-    <img src="/images/shopify/shopify-permissions.png" alt="Shopify permissions screen for Pay By Bank" />
+    <img src="/images/shopify/shopify-permissions.png" alt="Shopify permissions screen for Pay by Bank" />
   </Frame>
 </Step>
 
@@ -74,18 +78,18 @@ You'll be redirected to the Shopify App Store after clicking the Shopify card. Y
 
 ## Step 3: Connect Shopify to Quidkey
 
-After installation, Shopify redirects you to the **Connect Quidkey** page. You need to copy your credentials from the Quidkey dashboard and paste them here.
+After installation, Shopify redirects you to the **Connect Quidkey** page. You need to copy your credentials from the Quidkey Console and paste them into Shopify.
 
 <Steps>
-<Step title="Copy your Client ID">
-  Go back to your Quidkey dashboard, find your **Client ID**, and copy it into the **Client ID** field in Shopify.
-</Step>
-
-<Step title="Generate your Client Secret">
-  In your Quidkey dashboard, click **Generate** to create your Client Secret.
+<Step title="Open the Credentials tab and generate your Secret Key">
+  In your Quidkey Console, open the **Credentials** tab and click **Generate** to create your Secret Key.
 
   <Frame>
-    <img src="/images/shopify/generate-client-secret.png" alt="Client Secret popup shown in the Quidkey dashboard" />
+    <img src="/images/shopify/credentials-tab.png" alt="Credentials tab in the Quidkey Console" />
+  </Frame>
+
+  <Frame>
+    <img src="/images/shopify/generate-client-secret.png" alt="Client Secret popup shown in the Quidkey Console" />
   </Frame>
 
   <Warning>
@@ -102,7 +106,7 @@ After installation, Shopify redirects you to the **Connect Quidkey** page. You n
 </Step>
 </Steps>
 
-### Enable Test Mode and Activate
+### Enable Test Mode and Activate Quidkey
 
 After connecting, Shopify will show your Quidkey payment provider settings. Test Mode is normally enabled by default. If not, enable it manually:
 
@@ -120,6 +124,10 @@ This allows you to make test payments safely without affecting real orders.
 
 **Pay by Bank Spotlight** adds a small guidance indicator on your product pages. It's not a payment button; the actual Pay by Bank option appears on the checkout page. This indicator helps customers understand early that they can pay with their bank and increases conversion.
 
+<Frame>
+  <img src="/images/shopify/pay-by-bank-spotlight.png" alt="Pay by Bank Spotlight indicator shown on a product page" />
+</Frame>
+
 <Steps>
 <Step title="Open the theme editor">
   In your Shopify admin, go to **Online Store** > **Themes** and click **Customize** on your active theme.
@@ -129,16 +137,12 @@ This allows you to make test payments safely without affecting real orders.
   In the theme editor sidebar, open **App embeds**. Find **Pay by Bank Spotlight**, turn the toggle on, and click **Save**.
 
   <Frame>
-    <img src="/images/shopify/theme-editor-app-embeds.png" alt="Theme editor App embeds page showing Pay By Bank Spotlight toggle" />
+    <img src="/images/shopify/theme-editor-app-embeds.png" alt="Theme editor App embeds page showing Pay by Bank Spotlight toggle" />
   </Frame>
 </Step>
 
 <Step title="Verify on your store">
   Open your staging store URL (`https://{your-store-name}.myshopify.com`), go to any product page, and check that the Pay by Bank indicator appears.
-
-  <Frame>
-    <img src="/images/shopify/pay-by-bank-spotlight.png" alt="Product page showing the Pay by Bank Spotlight in action" />
-  </Frame>
 </Step>
 </Steps>
 
@@ -152,7 +156,7 @@ To run a test payment, you must use your **Shopify staging URL** (`https://{your
 
 <Steps>
 <Step title="Open your staging URL">
-  Go to `https://{your-store-name}.myshopify.com`
+  Go to `https://{your-store-name}.myshopify.com`.
 </Step>
 
 <Step title="Add a product and checkout">
@@ -176,28 +180,36 @@ To run a test payment, you must use your **Shopify staging URL** (`https://{your
 If you see "Pay with your bank" at checkout and can complete a test payment, your integration is working correctly.
 </Check>
 
-## Step 6: Go Live (When You're Ready)
+## Step 6: Add Your Business Information
 
-You only need to complete verification when you decide to accept real payments. This is done inside your Quidkey Merchant Portal.
+On your Dashboard you'll find a **Go Live checklist** with the required steps before you can start receiving real payments:
 
-At the top of your dashboard, you'll see a **Go Live** progress bar that guides you through everything needed before accepting real payments.
+1. Complete Business Information
+2. Add Director and Beneficial Owner Information
+3. Add a Bank Account
 
 <Frame>
-  <img src="/images/shopify/go-live-progress.png" alt="Go Live progress bar in the Quidkey dashboard" />
+  <img src="/images/shopify/quidkey-dashboard.png" alt="Go Live checklist in the Quidkey Dashboard" />
 </Frame>
 
-KYC/KYB verification includes:
-- Business registration details
-- Director and beneficial owner information
-- Proof of identity
-- Bank account information for payouts
-
-Once approved:
+KYC/KYB verification typically completes in minutes once all details are submitted. Once approved:
 - Live payments will be enabled in your Quidkey account
 - Payouts will be activated
 - Your pricing will be applied
 
-**Final step in Shopify:** Go to your Shopify Pay by Bank app settings and turn off **Test Mode**. Your store is now live and ready to accept real Pay by Bank payments.
+## Step 7: Start Accepting Payments
+
+Once your business has been approved you can switch off Test Mode and start accepting customer payments.
+
+<Steps>
+<Step title="Open your Shopify Pay by Bank app settings">
+  In your Shopify admin, open the Pay by Bank app settings.
+</Step>
+
+<Step title="Turn off Test Mode">
+  Toggle Test Mode off. Your store is now live and ready to accept real Pay by Bank payments.
+</Step>
+</Steps>
 
 ## Troubleshooting
 
@@ -211,7 +223,7 @@ Once approved:
 </Accordion>
 
 <Accordion title="Test order not appearing in Quidkey Dashboard">
-- Verify the Client Secret in Shopify matches your Quidkey dashboard
+- Verify the Client Secret in Shopify matches your Quidkey Console
 - Confirm the app is installed and connected correctly
 - Try disconnecting and reconnecting the app
 </Accordion>
