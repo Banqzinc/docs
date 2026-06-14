@@ -51,9 +51,10 @@
             ]
           },
           {
-            "group": "Hosted Checkout",
+            "group": "Payment Links",
             "pages": [
               "guides/payment-links/overview",
+              "guides/payment-links/console",
               "guides/payment-links/create",
               "guides/payment-links/checkout-experience",
               "guides/payment-links/after-payment"
@@ -95,7 +96,7 @@
             ]
           },
           {
-            "group": "Hosted Checkout",
+            "group": "Payment Links",
             "openapi": "api-reference/openapi.json",
             "pages": [
               "POST /api/v1/payment-links",
