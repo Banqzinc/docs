@@ -1,0 +1,86 @@
+---
+title: "Create from the Console"
+description: "Create and share a payment link from the Quidkey Console - no code required"
+icon: "wand-magic-sparkles"
+---
+
+Payment Links let you collect an instant Pay by Bank payment with nothing but a link, no card required and no account creation for your customer. You can create one directly from the Quidkey Console in a few clicks, with no code at all.
+
+<Note>
+**Prefer to integrate programmatically?** Developers can create the same links via the API. See [Create a Checkout Link](/guides/payment-links/create).
+</Note>
+
+## Step 1: Create the payment link
+
+<Steps>
+<Step title="Open Payment Links in the Console">
+  Log in to the [Quidkey Console](https://console.quidkey.com), go to **Payment Links**, and click **Create Payment Link**.
+</Step>
+
+<Step title="Enter the payment details">
+  Fill in the link details:
+
+  - **Amount** — the amount you want to collect
+  - **Currency** — the currency for the payment
+  - **Payment Reference** — appears on the transaction and the customer's bank statement (e.g. an invoice number, up to 18 characters)
+  - **Order ID** *(optional)* — your own internal reference for reconciliation
+
+  <Frame>
+    <img src="/images/payment-links/create-payment-link.png" alt="Create Payment Link dialog in the Quidkey Console" />
+  </Frame>
+</Step>
+
+<Step title="Generate the link">
+  Click **Create Payment Link** to generate your link.
+</Step>
+</Steps>
+
+## Step 2: Copy and share the link
+
+Once the link is created, click **Copy Link** and send it to your customer however you like, by email, SMS, messaging app, or include it in an invoice.
+
+<Frame>
+  <img src="/images/payment-links/share-link.png" alt="Payment Link Created dialog with a Copy Link button" />
+</Frame>
+
+<Tip>
+Lost the link? You can recover it at any time from the **Payment Links** list in the Console.
+</Tip>
+
+## Step 3: Your customer completes the payment
+
+When your customer opens the link, they land on a fully branded checkout page where they enter their details and confirm the payment in their banking app. Quidkey predicts their bank automatically, or they can pick it from the list. The whole thing takes a few seconds, with no card details and no account creation.
+
+<Card title="See the full customer journey" icon="browser" href="/guides/payment-links/checkout-experience">
+  Walk through exactly what your customer sees, step by step.
+</Card>
+
+## Step 4: Payment confirmed
+
+As soon as your customer approves the payment in their banking app, it is confirmed instantly. They see a confirmation page, and the payment appears in your Quidkey Console straight away.
+
+<Frame>
+  <img src="/images/payment-links/payment-confirmed.png" alt="Branded payment successful confirmation page" />
+</Frame>
+
+**That's it.** No chasing bank transfers. No waiting for payments to clear. Just a link.
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Checkout Experience" icon="browser" href="/guides/payment-links/checkout-experience">
+  What your customers see when they open a payment link
+</Card>
+
+<Card title="After Payment" icon="chart-line" href="/guides/payment-links/after-payment">
+  Track status and manage your links
+</Card>
+
+<Card title="Create via the API" icon="code" href="/guides/payment-links/create">
+  Generate links programmatically with the Quidkey API
+</Card>
+
+<Card title="Overview" icon="link" href="/guides/payment-links/overview">
+  Payment Links overview and lifecycle
+</Card>
+</CardGroup>

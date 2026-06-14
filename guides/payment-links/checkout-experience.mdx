@@ -28,7 +28,11 @@ flowchart LR
   - **Phone number** (E.164 format)
   - **Country**
 
-  These details are used to create the payment request and help Quidkey predict the customer's bank.
+  These details are used to create the payment request and help Quidkey predict the customer's bank. The order summary shows the merchant, reference, and total alongside the predicted bank.
+
+  <Frame>
+    <img src="/images/payment-links/customer-payment-page.png" alt="Branded checkout page showing the customer details form and order summary" />
+  </Frame>
 </Step>
 
 <Step title="Customer selects their bank">
@@ -37,10 +41,18 @@ flowchart LR
 
 <Step title="Customer authorizes at their bank">
   The customer is redirected to their bank's authentication page (or mobile app) to approve the payment. This is the standard Open Banking authorization flow: the bank verifies the customer's identity.
+
+  <Frame>
+    <img src="/images/payment-links/confirm-in-bank-app.png" alt="Customer approving the payment in their banking app" />
+  </Frame>
 </Step>
 
 <Step title="Payment complete">
   After authorization, the customer is redirected to a success or failure page. If the merchant provided custom `redirect_urls` when creating the link, the customer is sent to the merchant's site instead of Quidkey's default pages. You receive a webhook notification with the payment result regardless of redirect configuration.
+
+  <Frame>
+    <img src="/images/payment-links/payment-confirmed.png" alt="Branded payment successful confirmation page shown to the customer" />
+  </Frame>
 </Step>
 </Steps>
 
