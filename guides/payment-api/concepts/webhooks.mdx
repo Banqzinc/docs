@@ -413,7 +413,7 @@ Because resends reuse the same `event.id`, your handler **must de-duplicate on `
 If you suspect a webhook was missed (endpoint downtime, etc.), reconcile by querying the payment's current status directly. This protected merchant endpoint returns the authoritative state:
 
 ```bash
-curl 'https://core.quidkey.com/api/v1/merchants/MERCHANT_ID/payment-requests/PAYMENT_REQUEST_ID/status' \
+curl 'https://core.quidkey.com/api/v1/payment-requests/PAYMENT_REQUEST_ID/status' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 

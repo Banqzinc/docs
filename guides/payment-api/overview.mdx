@@ -4,7 +4,7 @@ description: "Accept bank-to-bank payments with a single API. Redirect, Embedded
 icon: "money-bill-transfer"
 ---
 
-The Payment API is the fastest way to start collecting bank-to-bank payments with Quidkey. Create a payment from your backend, send your buyer to a bank to approve it, and receive a webhook the moment it settles. One set of credentials, one authentication flow, and one webhook infrastructure power every integration path.
+Accept bank-to-bank payments with Quidkey: create a payment from your backend, send your buyer to a bank to approve it, and receive a webhook when it settles. Every integration path uses the same credentials, authentication, and webhooks.
 
 You choose how the payment is presented to the buyer. Want zero frontend work? Use a **Redirect** and send the buyer to a Quidkey-hosted bank page. Already running a Stripe checkout? Drop Quidkey in alongside it with the **Embedded** flow. Sending an invoice? Generate a **Hosted Checkout** link and share the URL.
 
@@ -26,7 +26,7 @@ Always set `test_transaction: true` while developing so you never move real mone
 
 ## Three Ways to Accept a Payment
 
-Every path uses the same OAuth credentials, the same integer minor-unit amounts, and the same webhooks. They differ only in where the buyer completes the payment and how much frontend code you write.
+Every path uses the same OAuth credentials, integer minor-unit amounts, and webhooks. They differ only in where the buyer completes the payment and how much frontend code you write.
 
 | | **Redirect (Pay by Bank)** | **Embedded (with Stripe)** | **Hosted Checkout** |
 |---|---|---|---|

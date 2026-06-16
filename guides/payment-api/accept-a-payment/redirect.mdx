@@ -4,7 +4,7 @@ description: "Create a payment and redirect the buyer to a Quidkey-hosted bank p
 icon: "arrow-up-right-from-square"
 ---
 
-The Redirect flow is the fastest way to accept a bank payment. You collect the buyer's details on your own site, create a payment from your backend, and send the buyer to a Quidkey-hosted page where they pick their bank and approve. No iframe, no Stripe, no checkout UI to build: just one API call and a redirect.
+Collect the buyer's details on your own site, create a payment from your backend, and send the buyer to a Quidkey-hosted page to pick their bank and approve. No iframe and no checkout UI to build: one API call and a redirect.
 
 <Note>
 **Amounts are integer minor units.** `2550` = £25.50, `1000` = €10.00. The same format is used across the Payment API. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
@@ -22,7 +22,7 @@ sequenceDiagram
     participant Bank as Buyer's Bank
     Buyer->>Merchant: Confirm order & details
     Merchant->>Backend: Place order
-    Backend->>Quidkey: POST /redirect-payment-requests (+ Idempotency-Key)
+    Backend->>Quidkey: POST /payment-requests:redirect (+ Idempotency-Key)
     Quidkey-->>Backend: 201 { data: { redirect_url } }
     Backend-->>Buyer: Redirect to redirect_url
     Buyer->>Quidkey: Pick bank on hosted page
@@ -93,12 +93,12 @@ See the [Authentication API reference](/api-reference/endpoint/issue-token) for 
 
 ## Step 2: Create a Redirect Payment
 
-Call `POST /api/v1/redirect-payment-requests` with a Bearer token and an `Idempotency-Key`. This is the flagship request: it carries the buyer, the billing address, the amount, and where to send the buyer afterwards.
+Call `POST /api/v1/payment-requests:redirect` with a Bearer token and an `Idempotency-Key`. The request body carries the buyer, the billing address, the amount, and where to send the buyer afterwards.
 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Idempotency-Key: order-1001-attempt-1' \
   -H 'Content-Type: application/json' \
@@ -127,7 +127,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
 ```
 
 ```javascript Node.js
-const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-requests', {
+const response = await fetch('https://core.quidkey.com/api/v1/payment-requests:redirect', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${accessToken}`,
@@ -166,7 +166,7 @@ res.redirect(303, data.redirect_url);
 import os, requests
 
 response = requests.post(
-    'https://core.quidkey.com/api/v1/redirect-payment-requests',
+    'https://core.quidkey.com/api/v1/payment-requests:redirect',
     headers={
         'Authorization': f'Bearer {access_token}',
         'Idempotency-Key': 'order-1001-attempt-1'
@@ -256,7 +256,7 @@ The browser redirect back to your site only means the buyer **returned**. It doe
 </Warning>
 
 <Note>
-After the bank flow, Quidkey sends the buyer back to your `success_url_redirect` or `fail_url_redirect`. Treat these strictly as **UX**: a place to show the buyer a confirmation or retry screen. They are **not** proof of the outcome. Confirm the result authoritatively via the [webhook](/guides/payment-api/concepts/webhooks), or by polling the merchant status endpoint `GET /api/v1/merchants/{merchantId}/payment-requests/{paymentRequestId}/status`.
+After the bank flow, Quidkey sends the buyer back to your `success_url_redirect` or `fail_url_redirect`. Treat these strictly as **UX**: a place to show the buyer a confirmation or retry screen. They are **not** proof of the outcome. Confirm the result authoritatively via the [webhook](/guides/payment-api/concepts/webhooks), or by polling the merchant status endpoint `GET /api/v1/payment-requests/{paymentRequestId}/status`.
 </Note>
 
 ## Idempotency
@@ -269,12 +269,12 @@ Reuse the **same** key when retrying the **same** logical request. Use a **new**
 
 ## Deep-link to a Bank
 
-If you already know which bank the buyer wants, for example because they chose it in your own UI, pass its `selected_bank_id` at create time. The hosted page skips the picker and takes the buyer straight to that bank.
+To skip the bank picker, pass a `selected_bank_id` at create time when the buyer has already chosen their bank in your own UI. The hosted page takes them straight to that bank.
 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Idempotency-Key: order-1001-attempt-1' \
   -H 'Content-Type: application/json' \
@@ -294,13 +294,13 @@ curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
     "amount": 2550,
     "currency": "GBP",
     "locale": "en-GB",
-    "selected_bank_id": "bank_123",
+    "selected_bank_id": "38c39d03-8df3-4980-b0a8-7e283c8c62dd",
     "test_transaction": true
   }'
 ```
 
 ```javascript Node.js
-const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-requests', {
+const response = await fetch('https://core.quidkey.com/api/v1/payment-requests:redirect', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${accessToken}`,
@@ -323,7 +323,7 @@ const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-r
     amount: 2550,
     currency: 'GBP',
     locale: 'en-GB',
-    selected_bank_id: 'bank_123',
+    selected_bank_id: '38c39d03-8df3-4980-b0a8-7e283c8c62dd',
     test_transaction: true
   })
 });
@@ -331,7 +331,7 @@ const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-r
 
 ```python Python
 response = requests.post(
-    'https://core.quidkey.com/api/v1/redirect-payment-requests',
+    'https://core.quidkey.com/api/v1/payment-requests:redirect',
     headers={
         'Authorization': f'Bearer {access_token}',
         'Idempotency-Key': 'order-1001-attempt-1'
@@ -352,7 +352,7 @@ response = requests.post(
         'amount': 2550,
         'currency': 'GBP',
         'locale': 'en-GB',
-        'selected_bank_id': 'bank_123',
+        'selected_bank_id': '38c39d03-8df3-4980-b0a8-7e283c8c62dd',
         'test_transaction': True
     }
 )
@@ -362,19 +362,17 @@ response = requests.post(
 
 ### Build a Bank Button
 
-To show the buyer's most popular banks in your own UI, before they reach the hosted page, fetch the top banks for their country and currency. Render each bank's logo as a button, then pass the chosen `id` as `selected_bank_id`.
+To show the buyer's most popular banks in your own UI before they reach the hosted page, fetch the top banks for their country and currency, then pass the chosen `id` as `selected_bank_id`. This endpoint is public and cacheable at the market level, so it needs no access token.
 
 <CodeGroup>
 
 ```bash cURL
-curl -X GET 'https://core.quidkey.com/api/v1/banks/top?country=GB&currency=GBP&limit=3' \
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+curl 'https://core.quidkey.com/api/v1/banks/top?country=GB&currency=GBP&limit=3'
 ```
 
 ```javascript Node.js
 const response = await fetch(
-  'https://core.quidkey.com/api/v1/banks/top?country=GB&currency=GBP&limit=3',
-  { headers: { 'Authorization': `Bearer ${accessToken}` } }
+  'https://core.quidkey.com/api/v1/banks/top?country=GB&currency=GBP&limit=3'
 );
 
 const { data } = await response.json();
@@ -386,8 +384,7 @@ for (const bank of data.banks) {
 ```python Python
 response = requests.get(
     'https://core.quidkey.com/api/v1/banks/top',
-    params={'country': 'GB', 'currency': 'GBP', 'limit': 3},
-    headers={'Authorization': f'Bearer {access_token}'}
+    params={'country': 'GB', 'currency': 'GBP', 'limit': 3}
 )
 
 for bank in response.json()['data']['banks']:
@@ -401,14 +398,18 @@ for bank in response.json()['data']['banks']:
   "success": true,
   "data": {
     "banks": [
-      { "id": "bank_123", "displayName": "Example Bank", "logoUrl": "https://.../example-bank.png" }
+      {
+        "id": "38c39d03-8df3-4980-b0a8-7e283c8c62dd",
+        "displayName": "Example Bank",
+        "logoUrl": "https://img.logo.dev/example-bank.com"
+      }
     ]
   }
 }
 ```
 
 <Tip>
-Use `displayName` and `logoUrl` to render a recognisable button, then deep-link with the matching `id` as `selected_bank_id`. Skip this entirely if you're happy to let the buyer choose on the hosted page.
+`country` is required (ISO 3166-1 alpha-2); `currency` and `limit` (1-50) are optional. Render buttons from `displayName` and `logoUrl`, then pass the matching `id` as `selected_bank_id`. This step is optional: let the buyer choose on the hosted page if you prefer.
 </Tip>
 
 ## Verify with Webhooks

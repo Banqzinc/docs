@@ -151,6 +151,7 @@
               "POST /api/v1/oauth2/token",
               "POST /api/v1/oauth2/refresh",
               "POST /api/v1/payment-requests:redirect",
+              "GET /api/v1/banks/top",
               "POST /api/v1/embedded/payment-requests",
               "PATCH /api/v1/embedded/payment-requests",
               "POST /api/v1/payment-links",

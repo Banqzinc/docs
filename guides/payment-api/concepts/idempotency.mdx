@@ -4,7 +4,7 @@ description: "Safely retry create requests without producing duplicate payments"
 icon: "fingerprint"
 ---
 
-Network failures happen: a request times out, a connection drops, or your service retries before it sees the response. Without protection, a retried "create payment" call could charge a customer twice. **Idempotency keys** let you retry safely: Quidkey recognises the repeat and replays the original result instead of creating a duplicate.
+Network failures happen: a request times out, a connection drops, or your service retries before it sees the response. Without protection, a retried create call could produce a duplicate payment. **Idempotency keys** let you retry safely: Quidkey recognises the repeat and replays the original result instead of creating a duplicate.
 
 ## Send an Idempotency Key
 
@@ -14,12 +14,12 @@ Add an `Idempotency-Key` header to create requests. Use a unique value (a UUID v
 Idempotency-Key: 3f9a2c10-7b6e-4a1c-9d2f-8e5b1c4a6f3d
 ```
 
-This matters most on create endpoints such as [`POST /api/v1/redirect-payment-requests`](/guides/payment-api/accept-a-payment/redirect), where a duplicate would create a second payment request.
+This matters most on create endpoints such as [`POST /api/v1/payment-requests:redirect`](/guides/payment-api/accept-a-payment/redirect), where a duplicate would create a second payment request.
 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: 3f9a2c10-7b6e-4a1c-9d2f-8e5b1c4a6f3d' \
@@ -36,7 +36,7 @@ import { randomUUID } from 'crypto';
 const idempotencyKey = randomUUID();
 
 const response = await fetch(
-  'https://core.quidkey.com/api/v1/redirect-payment-requests',
+  'https://core.quidkey.com/api/v1/payment-requests:redirect',
   {
     method: 'POST',
     headers: {
@@ -55,7 +55,7 @@ import uuid
 idempotency_key = str(uuid.uuid4())
 
 response = requests.post(
-    'https://core.quidkey.com/api/v1/redirect-payment-requests',
+    'https://core.quidkey.com/api/v1/payment-requests:redirect',
     headers={
         'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json',
@@ -77,10 +77,10 @@ Quidkey scopes idempotency keys per merchant. When it sees a key it has handled 
 sequenceDiagram
     participant App as Your Backend
     participant API as Quidkey API
-    App->>API: POST /redirect-payment-requests (Idempotency-Key: K)
+    App->>API: POST /payment-requests:redirect (Idempotency-Key: K)
     API-->>App: 201 Created (payment request P)
     Note over App: Response lost, retry
-    App->>API: POST /redirect-payment-requests (Idempotency-Key: K)
+    App->>API: POST /payment-requests:redirect (Idempotency-Key: K)
     API-->>App: 201 Created (same payment request P)
 ```
 

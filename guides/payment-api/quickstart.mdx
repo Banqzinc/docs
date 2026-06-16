@@ -74,12 +74,12 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
 </Step>
 
 <Step title="Create a Redirect payment">
-  Create a payment with `POST /api/v1/redirect-payment-requests`. Amounts are integer minor units, so `2550` means £25.50. Send an `Idempotency-Key` so a retried request never creates a second payment, and keep `test_transaction: true` while developing.
+  Create a payment with `POST /api/v1/payment-requests:redirect`. Amounts are integer minor units, so `2550` means £25.50. Send an `Idempotency-Key` so a retried request never creates a second payment, and keep `test_transaction: true` while developing.
 
   <CodeGroup>
 
   ```bash cURL
-  curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+  curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
     -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
     -H 'Idempotency-Key: order-1001-attempt-1' \
     -H 'Content-Type: application/json' \
@@ -107,7 +107,7 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
   ```
 
   ```javascript Node.js
-  const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-requests', {
+  const response = await fetch('https://core.quidkey.com/api/v1/payment-requests:redirect', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -145,7 +145,7 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
   import os, requests
 
   response = requests.post(
-      'https://core.quidkey.com/api/v1/redirect-payment-requests',
+      'https://core.quidkey.com/api/v1/payment-requests:redirect',
       headers={
           'Authorization': f'Bearer {access_token}',
           'Idempotency-Key': 'order-1001-attempt-1'
@@ -212,7 +212,7 @@ You just built the Redirect flow. Explore the full feature set, or pick a differ
 
 <CardGroup cols={2}>
 <Card title="Redirect (Pay by Bank)" icon="arrow-up-right-from-square" href="/guides/payment-api/accept-a-payment/redirect">
-  The full guide: field reference, deep-linking to a bank, and the bank button
+  The full guide: request reference, deep-linking to a bank, and webhooks
 </Card>
 
 <Card title="Embedded (with Stripe)" icon="credit-card" href="/guides/payment-api/accept-a-payment/embedded">

@@ -45,7 +45,7 @@ amount = round(19.99 * 100)  # 1999
 
 ```bash cURL
 # £19.99 is sent as the integer 1999
-curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{ "amount": 1999, "currency": "GBP", "locale": "en-GB" }'
@@ -73,7 +73,7 @@ The legacy `POST /api/v1/payment-requests` (v1) endpoint takes a **decimal** amo
 
 | Endpoint | Amount format | Example for £19.99 |
 |----------|---------------|--------------------|
-| `POST /api/v1/redirect-payment-requests` | Integer minor units | `1999` |
+| `POST /api/v1/payment-requests:redirect` | Integer minor units | `1999` |
 | Embedded / hosted checkout | Integer minor units | `1999` |
 | `POST /api/v1/payment-requests` (legacy v1) | Decimal major units | `"19.99"` |
 

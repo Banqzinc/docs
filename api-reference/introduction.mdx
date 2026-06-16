@@ -81,14 +81,16 @@ All Quidkey API responses follow a consistent structure:
 {
   "success": false,
   "error": {
-    "code": "INVALID_INPUT",
+    "code": "VALIDATION_ERROR",
     "message": "Human-readable error message",
-    "errors": [ // Optional - for validation errors
-      {
-        "field": "amount",
-        "message": "Amount must be greater than 0"
-      }
-    ]
+    "metadata": {
+      "errors": [
+        {
+          "field": "amount",
+          "message": "Amount must be greater than 0"
+        }
+      ]
+    }
   }
 }
 ```

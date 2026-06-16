@@ -13,7 +13,7 @@ Pass `test_transaction: true` when you create a payment. Quidkey routes it to th
 <CodeGroup>
 
 ```bash cURL
-curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -26,7 +26,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
 
 ```javascript Node.js
 const response = await fetch(
-  'https://core.quidkey.com/api/v1/redirect-payment-requests',
+  'https://core.quidkey.com/api/v1/payment-requests:redirect',
   {
     method: 'POST',
     headers: {
@@ -45,7 +45,7 @@ const response = await fetch(
 
 ```python Python
 response = requests.post(
-    'https://core.quidkey.com/api/v1/redirect-payment-requests',
+    'https://core.quidkey.com/api/v1/payment-requests:redirect',
     headers={
         'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ Webhooks for sandbox payments carry test markers, so your handler can tell sandb
   "data": {
     "object": {
       "id": "pr_782516093",
-      "amount": 1999,
+      "amount": "1999",
       "currency": "GBP",
       "status": "COMPLETED",
       "test": true,

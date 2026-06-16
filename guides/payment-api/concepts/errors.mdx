@@ -166,7 +166,7 @@ if not body['success']:
 
 ```bash cURL
 # Inspect the status code and body
-curl -i 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+curl -i 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{ "amount": 1999, "currency": "GBP", "locale": "en-GB" }'
