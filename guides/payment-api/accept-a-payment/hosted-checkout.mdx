@@ -7,7 +7,11 @@ icon: "link"
 Hosted Checkout lets you collect a bank payment without building any checkout UI. Create a payment link from your backend, share the URL with your buyer over email, SMS, or any messaging channel, and Quidkey hosts the entire checkout page. It's ideal for invoicing, ad-hoc payments, and no-code scenarios.
 
 <Note>
-**Amounts are integer minor units.** `5000` = €50.00, the same format used across the Payment API and by Stripe. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+**Amounts are integer minor units.** `5000` = €50.00. The same format is used across the Payment API. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+</Note>
+
+<Note>
+Set `test_transaction: true` while developing so no real money moves. See [Testing](/guides/payment-api/concepts/testing).
 </Note>
 
 ## How It Works
@@ -46,7 +50,8 @@ curl -X POST 'https://core.quidkey.com/api/v1/payment-links' \
     "order": {
       "amount": 5000,
       "currency": "EUR",
-      "payment_reference": "INV-2024-001"
+      "payment_reference": "INV2024001",
+      "test_transaction": true
     }
   }'
 ```
@@ -62,7 +67,8 @@ const response = await fetch('https://core.quidkey.com/api/v1/payment-links', {
     order: {
       amount: 5000,           // €50.00 in minor units
       currency: 'EUR',
-      payment_reference: 'INV-2024-001'
+      payment_reference: 'INV2024001',
+      test_transaction: true
     }
   })
 });
@@ -83,7 +89,8 @@ response = requests.post(
         'order': {
             'amount': 5000,         # €50.00 in minor units
             'currency': 'EUR',
-            'payment_reference': 'INV-2024-001'
+            'payment_reference': 'INV2024001',
+            'test_transaction': True
         }
     }
 )
@@ -113,6 +120,45 @@ Save the `payment_link_url`. This is the URL you'll share with your buyer. The t
 
 <Tip>
 Under the hood, the hosted page reads the link via the public `GET /api/v1/payment-links/:token/details` and completes payment with `POST /api/v1/payment-links/:token/confirm`. You don't call these yourself: Quidkey's checkout page handles them.
+</Tip>
+
+## Check the Link Status
+
+Read a link's current `status` and `expires_at` at any time with `GET /api/v1/payment-links/{id}`. Use it to reconcile: for example to confirm a link is still active before re-sending it, or as a backstop if you expected a webhook but never received one.
+
+<CodeGroup>
+
+```bash cURL
+curl 'https://core.quidkey.com/api/v1/payment-links/PAYMENT_LINK_ID' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript Node.js
+const response = await fetch(
+  `https://core.quidkey.com/api/v1/payment-links/${paymentLinkId}`,
+  { headers: { 'Authorization': `Bearer ${accessToken}` } }
+);
+
+const { data } = await response.json();
+console.log('Status:', data.status);
+console.log('Expires at:', data.expires_at);
+```
+
+```python Python
+response = requests.get(
+    f'https://core.quidkey.com/api/v1/payment-links/{payment_link_id}',
+    headers={'Authorization': f'Bearer {access_token}'}
+)
+
+data = response.json()['data']
+print('Status:', data['status'])
+print('Expires at:', data['expires_at'])
+```
+
+</CodeGroup>
+
+<Tip>
+The link status is for managing the link itself. The authoritative record of whether the buyer paid is the [webhook](/guides/payment-api/concepts/webhooks): fulfil orders on `quidkey.payment_request.succeeded`, not on the link status.
 </Tip>
 
 ## Full Integration Guide

@@ -7,11 +7,19 @@ icon: "credit-card"
 The Embedded flow puts Quidkey's bank payment option right next to your Stripe Payment Element. Buyers see both methods on your checkout page and choose between card (Stripe) and bank transfer (Quidkey), all without leaving your site. When the buyer picks one method, the other collapses, so there's never any ambiguity about how they're paying.
 
 <Note>
+This page is a quick orientation. If you're not already on Stripe, the [Redirect flow](/guides/payment-api/accept-a-payment/redirect) is the flagship integration and the best place to start. The full Embedded walkthrough lives in the dedicated [Embedded Flow guide](/guides/embedded-flow/overview).
+</Note>
+
+<Note>
 This flow assumes you already run a **Stripe Payment Element** on your checkout. You're adding Quidkey alongside it, not replacing it. No changes to your Stripe code are required.
 </Note>
 
 <Note>
-**Amounts are integer minor units.** `2550` = €25.50, the same format Stripe uses, so your existing amount handling carries over unchanged. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+**Amounts are integer minor units.** `2550` = €25.50. If your checkout already passes amounts in minor units, your existing amount handling carries over unchanged. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+</Note>
+
+<Note>
+Set `test_transaction: true` in the `order` while developing so no real money moves. See [Testing](/guides/payment-api/concepts/testing).
 </Note>
 
 ## How It Works
@@ -56,7 +64,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/embedded/payment-requests' \
       "order_id": "ORD-123456",
       "amount": 2550,
       "currency": "EUR",
-      "payment_reference": "Order #3451",
+      "payment_reference": "Order3451",
       "locale": "en-GB",
       "test_transaction": true
     },
@@ -85,7 +93,7 @@ const response = await fetch('https://core.quidkey.com/api/v1/embedded/payment-r
       order_id: 'ORD-123456',
       amount: 2550,           // €25.50 in minor units
       currency: 'EUR',
-      payment_reference: 'Order #3451',
+      payment_reference: 'Order3451',
       locale: 'en-GB',
       test_transaction: true
     },
@@ -96,7 +104,8 @@ const response = await fetch('https://core.quidkey.com/api/v1/embedded/payment-r
   })
 });
 
-const { payment_token, expires_in } = await response.json();
+const { data } = await response.json();
+const { payment_token, expires_in } = data;
 ```
 
 ```python Python
@@ -116,7 +125,7 @@ response = requests.post(
             'order_id': 'ORD-123456',
             'amount': 2550,         # €25.50 in minor units
             'currency': 'EUR',
-            'payment_reference': 'Order #3451',
+            'payment_reference': 'Order3451',
             'locale': 'en-GB',
             'test_transaction': True
         },
@@ -127,19 +136,33 @@ response = requests.post(
     }
 )
 
-data = response.json()
+data = response.json()['data']
 payment_token = data['payment_token']
 ```
 
 </CodeGroup>
 
+```json Response
+{
+  "success": true,
+  "data": {
+    "payment_token": "ptok_…",
+    "expires_in": 900
+  }
+}
+```
+
 <Check>
-You'll receive a `payment_token` and `expires_in`. Use the token to render the bank selection iframe.
+The response is enveloped: read `payment_token` and `expires_in` from `data`. Use the token to render the bank selection iframe.
 </Check>
 
 <Tip>
 Need to change the total after creating the request, for shipping or a discount code? Call `PATCH /api/v1/embedded/payment-requests` to update the amount or rewards before the buyer initiates payment. The full guide covers this in detail.
 </Tip>
+
+## After Payment
+
+When the buyer approves at their bank, Quidkey confirms the outcome with a signed [webhook](/guides/payment-api/concepts/webhooks) to your backend: this is the source of truth, not any browser redirect. Verify the signature, then fulfil on `quidkey.payment_request.succeeded`. The [Embedded Flow after-payment guide](/guides/embedded-flow/after-payment) covers handling `postMessage` events, signature verification, and processing fees end to end.
 
 ## Full Integration Guide
 

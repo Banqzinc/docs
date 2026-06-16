@@ -138,7 +138,7 @@ access_token = data['access_token']
 The response has the same shape as the token endpoint, including a fresh `access_token` and `expires_in`.
 
 <Tip>
-Refresh a little **early** — for example when the token is within ~60 seconds of expiry — so an in-flight request never fails on a token that expires mid-call.
+Refresh a little **early** (for example when the token is within ~60 seconds of expiry) so an in-flight request never fails on a token that expires mid-call.
 </Tip>
 
 ## Token Lifecycle

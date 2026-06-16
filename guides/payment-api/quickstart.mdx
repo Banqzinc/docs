@@ -24,8 +24,9 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
   curl -X POST 'https://core.quidkey.com/api/v1/oauth2/token' \
     -H 'Content-Type: application/json' \
     -d '{
-      "client_id": "your-client-id",
-      "client_secret": "your-client-secret"
+      "grant_type": "client_credentials",
+      "client_id": "YOUR_CLIENT_ID",
+      "client_secret": "YOUR_CLIENT_SECRET"
     }'
   ```
 
@@ -34,26 +35,30 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      grant_type: 'client_credentials',
       client_id: process.env.QUIDKEY_CLIENT_ID,
-      client_secret: process.env.QUIDKEY_CLIENT_SECRET
-    })
+      client_secret: process.env.QUIDKEY_CLIENT_SECRET,
+    }),
   });
 
-  const { access_token, refresh_token, expires_in } = await response.json();
+  const { data } = await response.json();
+  const accessToken = data.access_token;
   ```
 
   ```python Python
-  import os, requests
+  import os
+  import requests
 
   response = requests.post(
       'https://core.quidkey.com/api/v1/oauth2/token',
       json={
-          'client_id': os.getenv('QUIDKEY_CLIENT_ID'),
-          'client_secret': os.getenv('QUIDKEY_CLIENT_SECRET')
-      }
+          'grant_type': 'client_credentials',
+          'client_id': os.environ['QUIDKEY_CLIENT_ID'],
+          'client_secret': os.environ['QUIDKEY_CLIENT_SECRET'],
+      },
   )
 
-  data = response.json()
+  data = response.json()['data']
   access_token = data['access_token']
   ```
 
@@ -93,7 +98,7 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
       },
       "amount": 2550,
       "currency": "GBP",
-      "payment_reference": "ORDER-1001",
+      "payment_reference": "ORDER1001",
       "locale": "en-GB",
       "success_url_redirect": "https://yoursite.com/success",
       "fail_url_redirect": "https://yoursite.com/failure",
@@ -124,7 +129,7 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
       },
       amount: 2550,           // £25.50 in minor units
       currency: 'GBP',
-      payment_reference: 'ORDER-1001',
+      payment_reference: 'ORDER1001',
       locale: 'en-GB',
       success_url_redirect: 'https://yoursite.com/success',
       fail_url_redirect: 'https://yoursite.com/failure',
@@ -160,7 +165,7 @@ This guide takes you from zero to a completed bank payment in about ten minutes.
           },
           'amount': 2550,         # £25.50 in minor units
           'currency': 'GBP',
-          'payment_reference': 'ORDER-1001',
+          'payment_reference': 'ORDER1001',
           'locale': 'en-GB',
           'success_url_redirect': 'https://yoursite.com/success',
           'fail_url_redirect': 'https://yoursite.com/failure',

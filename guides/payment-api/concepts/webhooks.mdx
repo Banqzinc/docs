@@ -4,7 +4,7 @@ description: "Receive payment results securely: register endpoints, verify signa
 icon: "webhook"
 ---
 
-Webhooks are how your backend learns the outcome of a payment. When a payment changes state, Quidkey delivers a signed event to your registered URL. **This is the source of truth** — never rely on a browser redirect to confirm a payment.
+Webhooks are how your backend learns the outcome of a payment. When a payment changes state, Quidkey delivers a signed event to your registered URL. **This is the source of truth**: never rely on a browser redirect to confirm a payment.
 
 <Warning>
 Redirects can fail, be interrupted, or be triggered by a customer who never paid. Always confirm payment via the webhook (or the [status endpoint](#reconciling-missed-events)), not the redirect.
@@ -73,7 +73,7 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
   "data": {
     "object": {
       "id": "pr_782516093",
-      "amount": 1999,
+      "amount": "1999",
       "currency": "GBP",
       "status": "COMPLETED",
       "test": false,
@@ -83,17 +83,17 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
         "bank_name": "Monzo"
       },
       "fees": {
-        "total_fees": 0.30,
+        "total_fees": "30",
         "fees_currency": "GBP",
         "fees_breakdown": [
           {
             "id": "fee_percentage_123",
             "type": "percentage",
-            "amount": 0.30,
+            "amount": "30",
             "currency": "GBP",
             "rate_type": "domestic_percent_fee",
-            "rate_value": 1.5,
-            "notes": "1.5% fee on 19.99 GBP"
+            "rate_value": "1.5",
+            "notes": "1.5% fee on 1999 GBP (minor units)"
           }
         ]
       }
@@ -102,14 +102,18 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
 }
 ```
 
+<Note>
+On the wire, `amount` is a **string** holding a stringified integer of minor units (`"1999"` = £19.99), and the `fees` numeric fields (`total_fees`, each fee's `amount`, `rate_value`) are strings too. Parse them before doing arithmetic.
+</Note>
+
 | Field | Description |
 |-------|-------------|
-| `id` | Unique event ID (`evt_...`). **Use this to de-duplicate** — see [below](#delivery--de-duplication). |
+| `id` | Unique event ID (`evt_...`). **Use this to de-duplicate**: see [below](#delivery-and-de-duplication). |
 | `object` | Always `event`. |
 | `created` | Event creation time, Unix epoch seconds. |
-| `type` | The event type — see the [catalog](#event-catalog). |
+| `type` | The event type. See the [catalog](#event-catalog). |
 | `data.object.id` | The payment request ID. |
-| `data.object.amount` | Amount in **integer minor units** (see [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies)). |
+| `data.object.amount` | Amount in minor units, sent as a **stringified integer** (`"1999"` = £19.99). See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies). |
 | `data.object.currency` | ISO 4217 currency code. |
 | `data.object.status` | Underlying payment status. |
 | `data.object.test` | `true` for sandbox payments. See [Testing](/guides/payment-api/concepts/testing). |
@@ -177,7 +181,7 @@ app.post(
       return res.status(400).send(`Invalid signature: ${err.message}`);
     }
 
-    // event is verified — safe to handle
+    // event is verified: safe to handle
     handleEvent(event);
     res.status(200).send('OK');
   },
@@ -271,19 +275,63 @@ def verify_quidkey_signature(raw_body: bytes, signature_header: str, secret: str
 
 | Event type | When it fires | Notes |
 |------------|---------------|-------|
-| `quidkey.payment_request.succeeded` | Payment is `COMPLETED` and funds `RECEIVED` | Includes the `fees` object. Fulfil the order here. |
+| `quidkey.payment_request.succeeded` | The transaction reached `COMPLETED` (or `RECEIVED`) | Includes the `fees` object. Fulfil the order here. |
 | `quidkey.payment_request.failed` | The payment attempt failed | No fees. |
-| `quidkey.payment_request.canceled` | The payment was cancelled | **One `l`** — see the warning below. |
+| `quidkey.payment_request.canceled` | The payment was cancelled | **One `l`**. See the warning below. |
 | `quidkey.payment_request.pending` | Payment is in progress | The default in-flight state. |
 | `quidkey.payment_request.reversed` | A refund or reversal occurred | Adjust your records accordingly. |
 
 <Warning>
-The cancellation event is spelled `quidkey.payment_request.canceled` — **one `l`**, US spelling. Matching `cancelled` (two `l`s) will silently miss the event.
+The cancellation event is spelled `quidkey.payment_request.canceled`: **one `l`**, US spelling. Matching `cancelled` (two `l`s) will silently miss the event.
 </Warning>
+
+The `failed` and `reversed` events carry the same envelope, without a `fees` object:
+
+```json failed
+{
+  "id": "evt_3a9c1f72",
+  "object": "event",
+  "type": "quidkey.payment_request.failed",
+  "data": {
+    "object": {
+      "id": "pr_782516093",
+      "amount": "1999",
+      "currency": "GBP",
+      "status": "FAILED",
+      "test": false,
+      "metadata": { "order_id": "ORD-123" }
+    }
+  }
+}
+```
+
+```json reversed
+{
+  "id": "evt_5d4b2e81",
+  "object": "event",
+  "type": "quidkey.payment_request.reversed",
+  "data": {
+    "object": {
+      "id": "pr_782516093",
+      "amount": "1999",
+      "currency": "GBP",
+      "status": "REVERSED",
+      "test": false,
+      "metadata": { "order_id": "ORD-123" }
+    }
+  }
+}
+```
+
+<Note>
+**Terminal vs transitional states.** `pending` is transitional and resolves to one of `succeeded`, `failed`, or `canceled`. `succeeded` is otherwise terminal, but a settled payment can still move to `reversed` later if it is refunded or reversed.
+</Note>
 
 ### Handling Events
 
-```javascript
+<CodeGroup>
+
+```javascript Node.js
 function handleEvent(event) {
   // De-duplicate: skip if this event.id was already processed
   if (alreadyProcessed(event.id)) return;
@@ -313,16 +361,44 @@ function handleEvent(event) {
 }
 ```
 
-## Delivery & De-duplication
+```python Python
+def handle_event(event):
+    # De-duplicate: skip if this event['id'] was already processed
+    if already_processed(event['id']):
+        return
 
-Quidkey makes a **single** delivery attempt per event. There is **no automatic retry**. If your endpoint is down or returns a non-`2xx`, the event is not retried automatically — you resend it manually.
+    payment = event['data']['object']
+    order_id = payment['metadata']['order_id']
+    event_type = event['type']
+
+    if event_type == 'quidkey.payment_request.succeeded':
+        fulfil_order(order_id, payment)
+        if payment.get('fees'):
+            record_fees(order_id, payment['fees'])
+    elif event_type == 'quidkey.payment_request.failed':
+        mark_failed(order_id)
+    elif event_type == 'quidkey.payment_request.canceled':  # one 'l'
+        mark_cancelled(order_id)
+    elif event_type == 'quidkey.payment_request.pending':
+        mark_pending(order_id)
+    elif event_type == 'quidkey.payment_request.reversed':
+        reverse_order(order_id)
+
+    mark_processed(event['id'])
+```
+
+</CodeGroup>
+
+## Delivery and De-duplication
+
+Quidkey makes a **single** delivery attempt per event. There is **no automatic retry**. If your endpoint is down or returns a non-`2xx`, the event is not retried automatically; you resend it manually.
 
 <Info>
 **Manual resend.** You can resend a delivery from the Quidkey Console. A resend **reuses the same `event.id`** and is re-signed with a **fresh** timestamp (so the signature and timestamp tolerance still validate).
 </Info>
 
 <Warning>
-Because resends reuse the same `event.id`, your handler **must de-duplicate on `event.id`**. Record processed event IDs and skip any you have already handled — otherwise a resend will fulfil the same order twice.
+Because resends reuse the same `event.id`, your handler **must de-duplicate on `event.id`**. Record processed event IDs and skip any you have already handled; otherwise a resend will fulfil the same order twice.
 </Warning>
 
 | Property | Behaviour |

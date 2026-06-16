@@ -9,16 +9,16 @@ The Payment API is the fastest way to start collecting bank-to-bank payments wit
 You choose how the payment is presented to the buyer. Want zero frontend work? Use a **Redirect** and send the buyer to a Quidkey-hosted bank page. Already running a Stripe checkout? Drop Quidkey in alongside it with the **Embedded** flow. Sending an invoice? Generate a **Hosted Checkout** link and share the URL.
 
 <Note>
-**Amounts are always integer minor units.** `1000` = £10.00, `2550` = €25.50. This matches Stripe's format exactly, across every endpoint in the Payment API. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+**Amounts are always integer minor units** across every endpoint in the Payment API: `1000` = £10.00, `2550` = €25.50. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
 </Note>
+
+<Info>
+**Before you start:** sign up and grab your `client_id` and `client_secret` from the [Quidkey Console](https://console.quidkey.com). You'll exchange them for an access token on your first call.
+</Info>
 
 ## Base URL
 
-All Payment API requests go to a single base URL:
-
-| Environment | Base URL | Purpose |
-|-------------|----------|---------|
-| **Base URL** | `https://core.quidkey.com` | All API requests |
+All Payment API requests go to `https://core.quidkey.com`. There's no separate sandbox host: set `test_transaction: true` to route a request to the sandbox (see [Testing](/guides/payment-api/concepts/testing)).
 
 <Warning>
 Always set `test_transaction: true` while developing so you never move real money. Test payments flow through the same endpoints and fire the same webhooks as live payments.
@@ -69,7 +69,7 @@ sequenceDiagram
 </Step>
 
 <Step title="Webhook">
-  Quidkey sends a [webhook](/guides/payment-api/concepts/webhooks) to your backend with the final result. **The webhook is the source of truth**, not the browser redirect. Fulfil orders only when you receive `quidkey.payment_request.succeeded`.
+  Quidkey sends a [webhook](/guides/payment-api/concepts/webhooks) to your backend with the final result. **The webhook is the source of truth**, not the browser redirect. Fulfil orders only when you receive `quidkey.payment_request.succeeded`. Webhook delivery is a [single attempt with no automatic retry](/guides/payment-api/concepts/webhooks), so the merchant status endpoint is your reconcile backstop for any event you never received.
 </Step>
 </Steps>
 

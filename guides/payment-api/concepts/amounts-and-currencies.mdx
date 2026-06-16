@@ -4,11 +4,11 @@ description: "How Quidkey represents money: integer minor units and ISO 4217 cur
 icon: "coins"
 ---
 
-The Payment API represents money the same way Stripe does: amounts are **integer minor units**, and currencies are **ISO 4217** codes. Getting this right is the single most important detail when creating a payment.
+The Payment API represents money in a single, consistent way: amounts are **integer minor units**, and currencies are **ISO 4217** codes. Getting this right is the single most important detail when creating a payment.
 
 ## Amounts Are Integer Minor Units
 
-On the redirect, embedded, and hosted checkout endpoints, `amount` is an **integer** in the currency's smallest unit — pence for GBP, cents for EUR/USD. This matches Stripe's `unit_amount`.
+On the redirect, embedded, and hosted checkout endpoints, `amount` is an **integer** in the currency's smallest unit: pence for GBP, cents for EUR/USD. For example, `1999` = £19.99.
 
 | Display amount | Currency | `amount` to send |
 |----------------|----------|------------------|
@@ -21,12 +21,12 @@ On the redirect, embedded, and hosted checkout endpoints, `amount` is an **integ
 {
   "amount": 1999,
   "currency": "GBP",
-  "locale": "en"
+  "locale": "en-GB"
 }
 ```
 
 <Warning>
-**The 100× footgun.** Sending `20` does **not** mean £20 — it means **£0.20**. To charge £20.00, send `2000`. A decimal value such as `19.99` is rejected with a `400` validation error. Always multiply major units by 100 (for two-decimal currencies) before sending.
+**The 100× footgun.** Sending `20` does **not** mean £20; it means **£0.20**. To charge £20.00, send `2000`. A decimal value such as `19.99` is rejected with a `400` validation error. Always multiply major units by 100 (for two-decimal currencies) before sending.
 </Warning>
 
 To convert a display price to minor units, multiply by 100 and round to an integer:
@@ -48,7 +48,7 @@ amount = round(19.99 * 100)  # 1999
 curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{ "amount": 1999, "currency": "GBP", "locale": "en" }'
+  -d '{ "amount": 1999, "currency": "GBP", "locale": "en-GB" }'
 ```
 
 </CodeGroup>
@@ -68,7 +68,7 @@ There is **no FX (currency conversion)** on the redirect payment path. The payme
 ## Legacy Decimal Endpoint
 
 <Warning>
-The legacy `POST /api/v1/payment-requests` (v1) endpoint takes a **decimal** amount in **major** units — `"19.99"` for £19.99 — not minor units. It is retained for backward compatibility only. **New integrations should use the minor-unit endpoints** ([redirect](/guides/payment-api/accept-a-payment/redirect), [embedded](/guides/payment-api/accept-a-payment/embedded), and [hosted checkout](/guides/payment-api/accept-a-payment/hosted-checkout)).
+The legacy `POST /api/v1/payment-requests` (v1) endpoint takes a **decimal** amount in **major** units (`"19.99"` for £19.99), not minor units. It is retained for backward compatibility only. **New integrations should use the minor-unit endpoints** ([redirect](/guides/payment-api/accept-a-payment/redirect), [embedded](/guides/payment-api/accept-a-payment/embedded), and [hosted checkout](/guides/payment-api/accept-a-payment/hosted-checkout)).
 </Warning>
 
 | Endpoint | Amount format | Example for £19.99 |

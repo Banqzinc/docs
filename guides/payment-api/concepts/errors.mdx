@@ -14,14 +14,16 @@ Every error response has `success: false` and an `error` object:
 {
   "success": false,
   "error": {
-    "code": "INVALID_INPUT",
+    "code": "VALIDATION_ERROR",
     "message": "Human-readable error message",
-    "errors": [
-      {
-        "field": "amount",
-        "message": "Amount must be greater than 0"
-      }
-    ]
+    "metadata": {
+      "errors": [
+        {
+          "field": "amount",
+          "message": "Amount must be greater than 0"
+        }
+      ]
+    }
   }
 }
 ```
@@ -30,7 +32,7 @@ Every error response has `success: false` and an `error` object:
 |-------|-------------|
 | `error.code` | Stable, machine-readable error code. Branch on this in your code. |
 | `error.message` | Human-readable description. Use for logs and debugging, not for control flow. |
-| `error.errors` | Present on validation failures (`400`). An array of per-field problems. |
+| `error.metadata.errors` | Present on validation failures (`400`). An array of per-field problems. |
 
 <Tip>
 Always branch on `error.code`, never on `error.message`. Messages may be reworded over time; codes are stable.
@@ -41,7 +43,7 @@ Always branch on `error.code`, never on `error.message`. Messages may be reworde
 | Status | Meaning | Notes |
 |--------|---------|-------|
 | `200` / `201` | Success | Request processed; resource created on `201`. |
-| `400` | Validation error | Malformed or invalid input. Field-level details in `errors[]`. |
+| `400` | `VALIDATION_ERROR` | Malformed or invalid input. Field-level details in `error.metadata.errors`. |
 | `401` | `UNAUTHORIZED` | Missing, malformed, or expired access token. |
 | `403` | Forbidden | Authenticated, but insufficient permission for this action. |
 | `404` | Not found | Resource does not exist **or** belongs to another tenant. |
@@ -53,30 +55,32 @@ Always branch on `error.code`, never on `error.message`. Messages may be reworde
 
 ## Validation Errors (400)
 
-A `400` indicates the request body or parameters failed validation. The `errors[]` array pinpoints each offending field, so you can surface precise feedback.
+A `400` indicates the request body or parameters failed validation. The `error.metadata.errors` array pinpoints each offending field, so you can surface precise feedback.
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "INVALID_INPUT",
+    "code": "VALIDATION_ERROR",
     "message": "Validation failed",
-    "errors": [
-      {
-        "field": "amount",
-        "message": "Amount must be a positive integer in minor units"
-      },
-      {
-        "field": "currency",
-        "message": "currency must be a valid ISO 4217 code"
-      }
-    ]
+    "metadata": {
+      "errors": [
+        {
+          "field": "amount",
+          "message": "Amount must be a positive integer in minor units"
+        },
+        {
+          "field": "currency",
+          "message": "currency must be a valid ISO 4217 code"
+        }
+      ]
+    }
   }
 }
 ```
 
 <Tip>
-Amounts are **integer minor units** — `1999` means £19.99, not £1,999. Sending a decimal or a major-unit value is a common source of `400` validation errors. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+Amounts are **integer minor units**: `1999` means £19.99, not £1,999. Sending a decimal or a major-unit value is a common source of `400` validation errors. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
 </Tip>
 
 ## Cross-Tenant Access Returns 404
@@ -95,6 +99,19 @@ This is deliberate. A `403` would confirm the resource exists, leaking informati
 | `403` Forbidden | Token lacks the required permission | Verify the credentials have access to this operation. |
 | `404` Not found | Resource missing or cross-tenant | Check the ID; confirm it belongs to your merchant. |
 
+## Error Codes
+
+Branch on these stable `error.code` values:
+
+| Status | `error.code` | Meaning |
+|--------|--------------|---------|
+| `400` | `VALIDATION_ERROR` | Request body or parameters failed validation. Field-level details in `error.metadata.errors`. |
+| `409` | `IDEMPOTENT_REQUEST_IN_PROGRESS` | A request with the same idempotency key is still in flight. Retry with the same key. |
+| `410` | `PAYMENT_LINK_EXPIRED` | The payment link has passed its expiry. |
+| `410` | `PAYMENT_LINK_NOT_ACTIVE` | The payment link is not in an active state. |
+| `422` | `MISSING_CONVERTED_AMOUNT` | A required converted amount was not supplied. |
+| `503` | `IDEMPOTENCY_STORE_UNAVAILABLE` | Idempotency store temporarily down. Retryable. |
+
 ## Handling Errors
 
 <CodeGroup>
@@ -104,7 +121,7 @@ const response = await fetch(url, options);
 const body = await response.json();
 
 if (!body.success) {
-  const { code, message, errors } = body.error;
+  const { code, message, metadata } = body.error;
 
   switch (code) {
     case 'UNAUTHORIZED':
@@ -116,9 +133,9 @@ if (!body.success) {
     case 'IDEMPOTENCY_STORE_UNAVAILABLE':
       // Retry with backoff; the request was not processed
       break;
-    case 'INVALID_INPUT':
+    case 'VALIDATION_ERROR':
       // Surface field errors to the caller
-      for (const e of errors ?? []) console.error(e.field, e.message);
+      for (const e of metadata?.errors ?? []) console.error(e.field, e.message);
       break;
     default:
       console.error(code, message);
@@ -140,8 +157,8 @@ if not body['success']:
         ...  # Wait briefly, then retry with the SAME idempotency key
     elif code == 'IDEMPOTENCY_STORE_UNAVAILABLE':
         ...  # Retry with backoff; the request was not processed
-    elif code == 'INVALID_INPUT':
-        for e in error.get('errors', []):
+    elif code == 'VALIDATION_ERROR':
+        for e in error.get('metadata', {}).get('errors', []):
             print(e['field'], e['message'])
     else:
         print(code, error['message'])
@@ -152,13 +169,15 @@ if not body['success']:
 curl -i 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{ "amount": 1999, "currency": "GBP", "locale": "en" }'
+  -d '{ "amount": 1999, "currency": "GBP", "locale": "en-GB" }'
 ```
 
 </CodeGroup>
 
+<Note>Body abbreviated. See the [Redirect guide](/guides/payment-api/accept-a-payment/redirect) for the full required payload.</Note>
+
 <Info>
-**Retry guidance:** retry `409`, `503`, and `500` with exponential backoff. Do **not** blindly retry `400`, `401`, `403`, `404`, or `410` — fix the request or credentials first.
+**Retry guidance:** retry `409`, `503`, and `500` with exponential backoff. Do **not** blindly retry `400`, `401`, `403`, `404`, or `410`; fix the request or credentials first.
 </Info>
 
 ## Next Steps

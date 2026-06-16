@@ -4,7 +4,7 @@ description: "Run payments against the sandbox without moving real money"
 icon: "flask"
 ---
 
-Before going live, exercise the full payment flow in a sandbox. Quidkey routes test payments to a sandbox provider so you can integrate, verify webhooks, and rehearse edge cases — **with no real bank movement**.
+Before going live, exercise the full payment flow in a sandbox. Quidkey routes test payments to a sandbox provider so you can integrate, verify webhooks, and rehearse edge cases, **with no real bank movement**.
 
 ## Route a Payment to the Sandbox
 
@@ -19,7 +19,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
   -d '{
     "amount": 1999,
     "currency": "GBP",
-    "locale": "en",
+    "locale": "en-GB",
     "test_transaction": true
   }'
 ```
@@ -36,7 +36,7 @@ const response = await fetch(
     body: JSON.stringify({
       amount: 1999,
       currency: 'GBP',
-      locale: 'en',
+      locale: 'en-GB',
       test_transaction: true,
     }),
   },
@@ -53,13 +53,15 @@ response = requests.post(
     json={
         'amount': 1999,
         'currency': 'GBP',
-        'locale': 'en',
+        'locale': 'en-GB',
         'test_transaction': True,
     },
 )
 ```
 
 </CodeGroup>
+
+<Note>Body abbreviated. See the [Redirect guide](/guides/payment-api/accept-a-payment/redirect) for the full required payload.</Note>
 
 <Warning>
 Always set `test_transaction: true` in development. A request without it is treated as **live** and may attempt a real bank movement.
@@ -95,7 +97,7 @@ Gate your fulfilment logic on `data.object.test`. In non-production environments
 
 | Aspect | Sandbox (`test_transaction: true`) | Live |
 |--------|-------------------------------------|------|
-| Bank movement | None — simulated by the sandbox provider | Real funds move |
+| Bank movement | None: simulated by the sandbox provider | Real funds move |
 | Webhook events | Same shapes, with `test`/`sandbox` markers | Production events |
 | Credentials | Use a separate set of credentials / webhook secret if you have them | Production credentials |
 
