@@ -1,0 +1,220 @@
+---
+title: "After Payment"
+description: "Verify the Stripe-compatible webhook, handle the full event catalog, and reconcile status"
+icon: "chart-line"
+---
+
+The redirect back to your site is a convenience, not proof of payment. The **authoritative** result
+arrives as a signed HTTPS webhook. Quidkey sends a **Stripe `Event` envelope** signed with a scheme
+**Stripe's own SDK verifies out of the box**.
+
+<Warning>
+Never mark an order paid on the redirect alone. Redirects can fail or be interrupted. Confirm via the
+webhook (or the [status endpoint](#status-reconciliation) as a fallback).
+</Warning>
+
+## Register a webhook + signing secret
+
+<Steps>
+<Step title="Register your webhook URL">
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{ "webhook_url": "https://api.yoursite.com/webhooks/quidkey" }'
+```
+</Step>
+<Step title="Generate the signing secret">
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+The secret (`whsec_…`) is returned **once**. Store it in a secure vault.
+<Warning>
+A redirect payment whose merchant has **no** `whsec_` secret records a **failed** delivery — generate
+the secret before going live.
+</Warning>
+</Step>
+</Steps>
+
+## Webhook payload
+
+```json
+{
+  "id": "evt_28b2d68f",
+  "object": "event",
+  "created": 1716148300,
+  "type": "quidkey.payment_request.succeeded",
+  "data": {
+    "object": {
+      "id": "pr_782516093",
+      "amount": 1999,
+      "currency": "GBP",
+      "status": "completed",
+      "test": true,
+      "metadata": { "order_id": "ORD-123456", "payment_token": "ptok_…", "bank_name": "Monzo" },
+      "fees": { "total_fees": "0.30", "fees_breakdown": [ /* … */ ] }
+    }
+  }
+}
+```
+
+`event.data.object.amount` is in **integer minor units** (matching what you sent). `fees` are present
+only on successful events.
+
+## HTTP headers
+
+| Header | Purpose |
+|--------|---------|
+| `Stripe-Signature` | `t=<unix-ts>,v1=<hex-hmac>` — alias of `X-Signature`, so Stripe's SDK verifies it directly |
+| `X-Signature` | Same value as `Stripe-Signature` (Quidkey-native name) |
+| `X-Timestamp` | Unix epoch seconds |
+| `X-Client-Id` | Your `client_id` |
+
+The HMAC is **SHA-256 over `"${timestamp}.${raw_body}"`**, keyed by your **full** webhook signing
+secret — including the `whsec_` prefix.
+
+<Warning>
+Verify against the **raw request body bytes**, before any JSON parsing/re-serialisation. And use the
+secret **verbatim** (with `whsec_`) — do not strip the prefix.
+</Warning>
+
+## Verify the signature
+
+<Tabs>
+<Tab title="Stripe SDK">
+```typescript
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_KEY ?? 'sk_unused');
+
+// req.body must be the RAW body (e.g. express.raw({ type: 'application/json' }))
+const event = stripe.webhooks.constructEvent(
+  req.body,
+  req.get('stripe-signature'),
+  process.env.QUIDKEY_WEBHOOK_SECRET // whsec_… , verbatim
+);
+// event.type === 'quidkey.payment_request.succeeded', event.data.object === our payload
+```
+</Tab>
+<Tab title="Plain HMAC (no Stripe dependency)">
+```typescript
+import crypto from 'crypto';
+
+function verify(rawBody: Buffer | string, header: string, secret: string) {
+  const m = header.match(/^t=(\d+),v1=([a-f0-9]+)$/);
+  if (!m) throw new Error('Malformed signature header');
+  const [, ts, v1] = m;
+  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))) {
+    throw new Error('Invalid signature');
+  }
+  if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) throw new Error('Timestamp outside tolerance');
+}
+```
+</Tab>
+</Tabs>
+
+## Event catalog
+
+`event.type` is always a `quidkey.payment_request.*` event — handle all of them, not just success/fail.
+
+| `event.type` | When | Notes |
+|---|---|---|
+| `quidkey.payment_request.succeeded` | Payment completed (covers internal `COMPLETED` **and** `RECEIVED`) | Includes `fees`. |
+| `quidkey.payment_request.failed` | Payment failed | |
+| `quidkey.payment_request.canceled` | Buyer/bank cancelled | **Spelled with one `l`** (US spelling), unlike the internal `CANCELLED` status. |
+| `quidkey.payment_request.pending` | In progress / default before a terminal state | |
+| `quidkey.payment_request.reversed` | Refund / reversal of a prior payment | |
+
+<Warning>
+The event name is `canceled` (one `l`). Match on the exact string — don't assume `cancelled`.
+</Warning>
+
+## Process events
+
+```typescript
+app.post('/webhooks/quidkey', express.raw({ type: 'application/json' }), (req, res) => {
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.get('stripe-signature'), webhookSecret);
+  } catch {
+    return res.status(400).send('Invalid signature');
+  }
+
+  // De-duplicate on the stable event id (it is reused across resends of the same event).
+  if (alreadyProcessed(event.id)) return res.status(200).send('OK');
+
+  const payment = event.data.object;
+  switch (event.type) {
+    case 'quidkey.payment_request.succeeded':
+      markOrderPaid(payment.metadata.order_id, payment); break;
+    case 'quidkey.payment_request.failed':
+    case 'quidkey.payment_request.canceled':
+      markOrderUnpaid(payment.metadata.order_id, event.type); break;
+    case 'quidkey.payment_request.reversed':
+      markOrderRefunded(payment.metadata.order_id); break;
+    case 'quidkey.payment_request.pending':
+      break; // informational
+  }
+  recordProcessed(event.id);
+  res.status(200).send('OK');
+});
+```
+
+## Delivery & retries
+
+<Info>
+**Current behaviour:** each event is delivered **once**. A failed delivery is recorded and can be
+**re-sent manually** from the Quidkey console; automatic multi-day retries are not yet enabled.
+Because a resend reuses the same top-level `id` (`evt_<…>`), **de-duplicate on `event.id`**. Resends
+are re-signed with a fresh timestamp, so they stay within the 300s verification tolerance.
+</Info>
+
+## Status reconciliation
+
+If you miss a webhook, reconcile via the protected, merchant-scoped status endpoint (your `client_id`
+must hold `payment-requests:read`):
+
+```bash
+curl 'https://core.quidkey.com/api/v1/merchants/YOUR_MERCHANT_ID/payment-requests/PAYMENT_REQUEST_ID/status' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```json
+{ "success": true, "data": { "payment_request_id": "…", "status": "completed", "amount": 1999, "currency": "GBP", "order_id": "ORD-123456", "transaction_number": "…" } }
+```
+
+A cross-tenant or unknown id returns `404`. (The public, buyer-facing status URL embedded in the
+hosted page returns only a minimal, PII-free view and is not intended for backend reconciliation.)
+
+## QA checklist before going live
+
+<AccordionGroup>
+<Accordion title="Security & configuration">
+- [ ] Create call is server-side only; `client_secret` never reaches the browser
+- [ ] Webhook secret stored in a secure vault; `whsec_` prefix kept verbatim
+- [ ] Signature verified over the **raw** body bytes
+- [ ] `redirect_url` is never logged or shared
+</Accordion>
+<Accordion title="Money & idempotency">
+- [ ] Amounts sent as integer minor units (`1999`, not `19.99`)
+- [ ] A unique `Idempotency-Key` per payment attempt; retries replay, not double-charge
+</Accordion>
+<Accordion title="Webhooks">
+- [ ] All five event types handled (incl. `canceled` — one `l` — and `reversed`)
+- [ ] De-duplicated on `event.id`
+- [ ] Order marked paid from the webhook, not the redirect
+- [ ] Status endpoint wired as a fallback
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Pay by Bank Overview" icon="building-columns" href="/guides/pay-by-bank/overview">
+  Back to the overview
+</Card>
+<Card title="Create a Payment" icon="plus" href="/guides/pay-by-bank/create">
+  The create call and request fields
+</Card>
+</CardGroup>

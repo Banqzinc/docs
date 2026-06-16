@@ -1,0 +1,120 @@
+---
+title: "Create a Payment"
+description: "Authenticate, create a redirect payment, and redirect the buyer to the bank picker"
+icon: "plus"
+---
+
+This is a one-time server-side setup followed by a per-payment create call. All calls are
+server-to-server — the create endpoint is `protected` and must never run in the browser.
+
+## 1. Authenticate (OAuth2 client credentials)
+
+Exchange your `client_id` / `client_secret` for a short-lived access token (~15 min) and a 24h
+refresh token at `POST /api/v1/oauth2/token`.
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/oauth2/token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET"
+  }'
+```
+
+```json
+{ "access_token": "eyJ...", "refresh_token": "eyJ...", "expires_in": 900, "token_type": "Bearer" }
+```
+
+Refresh before expiry at `POST /api/v1/oauth2/refresh`. Cache the access token server-side and
+reuse it across payments; never ship it to the client.
+
+<Tip>
+See the [Issue Token API](/api-reference/endpoint/issue-token) for the full request/response and an
+interactive playground.
+</Tip>
+
+## 2. Create a redirect payment
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 5f1d8c2e-7b3a-4a9e-bc11-2c0f1e9a7d33' \
+  -d '{
+    "merchant_id": "YOUR_MERCHANT_ID",
+    "customer": { "name": "John Doe", "email": "john@example.com", "phone_number": "+447123456789" },
+    "billing_address": { "address_line1": "1 Market Street", "city": "London", "postal_code": "EC1A 1BB", "country": "GB" },
+    "amount": 1999,
+    "currency": "GBP",
+    "payment_reference": "ORDER123",
+    "order_id": "ORD-123456",
+    "locale": "en_GB",
+    "success_url_redirect": "https://merchant.com/checkout/success",
+    "fail_url_redirect": "https://merchant.com/checkout/failure",
+    "test_transaction": true
+  }'
+```
+
+```json
+{ "success": true, "data": { "redirect_url": "https://core.quidkey.com/api/v1/bank-selection?paymentRequestId=…" } }
+```
+
+### Request fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `amount` | integer | **Minor units** (`1999` = £19.99), matching Stripe's `unit_amount`. Decimals are rejected. |
+| `currency` | string | ISO-4217 (e.g. `GBP`, `EUR`). |
+| `customer` | object | `name` + `email` (or `phone_number`). |
+| `billing_address` | object | `address_line1`, `city`, `postal_code`, `country` (ISO-3166 alpha-2). |
+| `payment_reference` | string? | Appears on the payer's bank statement (≤18 alphanumerics). |
+| `order_id` | string? | Your order identifier; echoed back in the webhook metadata. |
+| `success_url_redirect` / `fail_url_redirect` | string? | Where the buyer returns after the bank flow. |
+| `selected_bank_id` | string? | Omit for the banks-only picker; pass it to deep-link straight to one bank. |
+| `test_transaction` | boolean? | Routes to the sandbox provider. |
+
+<Warning>
+**Amounts are integer minor units.** Send `1999` for £19.99 — **not** `19.99`. A whole-number amount
+like `20` means £0.20, not £20.00.
+</Warning>
+
+The strict schema **rejects unknown fields** and **non-integer amounts** with `400`. You do not send a
+`platform` — the redirect endpoint always delivers on the Stripe-style webhook channel.
+
+## 3. Redirect the buyer
+
+Redirect the buyer's browser to the returned `redirect_url`. They land on a Quidkey-hosted,
+**banks-only** page (buyer details were already supplied), select a bank, and complete SCA. They are
+then returned to your `success_url_redirect` / `fail_url_redirect`.
+
+<Warning>
+The `redirect_url` is an unauthenticated bearer capability keyed by an unguessable id. Treat it as a
+short-lived secret — don't log it or expose it beyond the buyer's redirect.
+</Warning>
+
+## Idempotency
+
+Send a unique `Idempotency-Key` header (a UUID) on the create call. A retried request with the **same
+key + same merchant** replays the original response instead of creating a second payment; a concurrent
+duplicate is rejected with `409 IDEMPOTENT_REQUEST_IN_PROGRESS`. Generate a fresh key per logical
+payment attempt.
+
+## The "Pay by Bank" button
+
+The button is built and styled by you. Use `GET /api/v1/banks/top` to fetch the top banks for your
+market (public, cacheable) and show their logos next to the button:
+
+```bash
+curl 'https://core.quidkey.com/api/v1/banks/top?country=GB&currency=GBP&limit=3'
+```
+
+```json
+{ "success": true, "data": { "banks": [ { "id": "…", "displayName": "Monzo", "logoUrl": "https://…" } ] } }
+```
+
+## Next Steps
+
+<Card title="After Payment" icon="chart-line" href="/guides/pay-by-bank/after-payment">
+  Verify the Stripe-compatible webhook and handle the full event catalog
+</Card>

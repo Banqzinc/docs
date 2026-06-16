@@ -51,6 +51,14 @@
             ]
           },
           {
+            "group": "Pay by Bank (Redirect)",
+            "pages": [
+              "guides/pay-by-bank/overview",
+              "guides/pay-by-bank/create",
+              "guides/pay-by-bank/after-payment"
+            ]
+          },
+          {
             "group": "Hosted Checkout",
             "pages": [
               "guides/payment-links/overview",
