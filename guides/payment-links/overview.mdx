@@ -1,12 +1,16 @@
 ---
-title: "Hosted Checkout"
+title: "Payment Links"
 description: "Collect payments through a Quidkey-hosted checkout page. No frontend code required"
 icon: "link"
 ---
 
-Hosted Checkout lets you collect payments through a Quidkey-hosted checkout page for bank-to-bank payments. Create a checkout link, send it to your customer via email, SMS, or any messaging channel, and get paid. No frontend integration needed.
+Payment Links let you collect bank-to-bank payments through a Quidkey-hosted checkout page. Create a link, from the Console with no code or via the API, send it to your customer via email, SMS, or any messaging channel, and get paid. No frontend integration needed.
 
 <CardGroup cols={2}>
+<Card title="Create from the Console" icon="wand-magic-sparkles" href="/guides/payment-links/console">
+  Create and share a link from the Console, no code required
+</Card>
+
 <Card title="Create a Checkout Link" icon="plus" href="/guides/payment-links/create">
   Create and share your first checkout link via the API
 </Card>
@@ -24,11 +28,11 @@ Hosted Checkout lets you collect payments through a Quidkey-hosted checkout page
 </Card>
 </CardGroup>
 
-## When to Use Hosted Checkout
+## When to Use Payment Links
 
-Hosted Checkout and the Embedded Flow serve different integration needs:
+Payment Links and the Embedded Flow serve different integration needs:
 
-| | **Hosted Checkout** | **Embedded Flow** |
+| | **Payment Links** | **Embedded Flow** |
 |---|---|---|
 | **Best for** | Invoicing, ad-hoc payments, no-code scenarios | E-commerce checkouts, in-app payments |
 | **Integration effort** | API call to create link, then share the URL | Embed iframe, handle postMessage events |
@@ -37,7 +41,7 @@ Hosted Checkout and the Embedded Flow serve different integration needs:
 | **Use case** | B2B invoices, service payments, cross-border pay-ins | Online stores, subscription platforms |
 
 <Tip>
-**Already using the Embedded Flow?** You can use both. Hosted Checkout is ideal for scenarios where you need to collect a payment outside your checkout page, like sending an invoice link via email.
+**Already using the Embedded Flow?** You can use both. Payment Links are ideal for scenarios where you need to collect a payment outside your checkout page, like sending an invoice link via email.
 </Tip>
 
 ## How It Works
@@ -48,7 +52,7 @@ sequenceDiagram
     actor Merchant
     participant API as Quidkey API
     actor Customer
-    participant Checkout as Hosted Checkout
+    participant Checkout as Checkout Page
     participant Bank as Customer's Bank
 
     Merchant->>API: POST /payment-links (amount, currency, reference)
