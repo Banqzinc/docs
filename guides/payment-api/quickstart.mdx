@@ -1,0 +1,224 @@
+---
+title: "Quickstart"
+description: "Your first Quidkey payment in about 10 minutes, end to end"
+icon: "rocket"
+---
+
+This guide takes you from zero to a completed bank payment in about ten minutes. You'll authenticate, create a **Redirect** payment in test mode, send a buyer to their bank, and confirm the result with a webhook. Every request is copy-pasteable.
+
+<Card title="Sign Up for Credentials" icon="user-plus" href="https://console.quidkey.com" size="lg">
+  Create your merchant account to get your `client_id` and `client_secret`
+</Card>
+
+<Note>
+**Test mode.** Every request below sets `test_transaction: true`, so no real money moves. Test payments use the same endpoints and fire the same webhooks as live ones, so the integration you build here is the integration you ship. See [Testing](/guides/payment-api/concepts/testing) for more.
+</Note>
+
+<Steps>
+<Step title="Get an access token">
+  Exchange your credentials for an access token using the OAuth 2.0 client credentials flow. The token is valid for 15 minutes.
+
+  <CodeGroup>
+
+  ```bash cURL
+  curl -X POST 'https://core.quidkey.com/api/v1/oauth2/token' \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "client_id": "your-client-id",
+      "client_secret": "your-client-secret"
+    }'
+  ```
+
+  ```javascript Node.js
+  const response = await fetch('https://core.quidkey.com/api/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: process.env.QUIDKEY_CLIENT_ID,
+      client_secret: process.env.QUIDKEY_CLIENT_SECRET
+    })
+  });
+
+  const { access_token, refresh_token, expires_in } = await response.json();
+  ```
+
+  ```python Python
+  import os, requests
+
+  response = requests.post(
+      'https://core.quidkey.com/api/v1/oauth2/token',
+      json={
+          'client_id': os.getenv('QUIDKEY_CLIENT_ID'),
+          'client_secret': os.getenv('QUIDKEY_CLIENT_SECRET')
+      }
+  )
+
+  data = response.json()
+  access_token = data['access_token']
+  ```
+
+  </CodeGroup>
+
+  <Check>
+  You should receive an `access_token` valid for 15 minutes, plus a `refresh_token` and `expires_in`. Send the access token as `Authorization: Bearer <token>` on every request that follows.
+  </Check>
+
+  <Tip>
+  No credentials yet? [Try authentication in the API playground](/api-reference/endpoint/issue-token) first. No setup required. For the full token lifecycle, see [Authentication](/guides/payment-api/concepts/authentication).
+  </Tip>
+</Step>
+
+<Step title="Create a Redirect payment">
+  Create a payment with `POST /api/v1/redirect-payment-requests`. Amounts are integer minor units, so `2550` means £25.50. Send an `Idempotency-Key` so a retried request never creates a second payment, and keep `test_transaction: true` while developing.
+
+  <CodeGroup>
+
+  ```bash cURL
+  curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+    -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+    -H 'Idempotency-Key: order-1001-attempt-1' \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "merchant_id": "your-merchant-id",
+      "customer": {
+        "name": "Jane Buyer",
+        "email": "jane@example.com",
+        "phone_number": "+447700900123"
+      },
+      "billing_address": {
+        "address_line1": "1 Market Street",
+        "city": "London",
+        "postal_code": "EC1A 1AA",
+        "country": "GB"
+      },
+      "amount": 2550,
+      "currency": "GBP",
+      "payment_reference": "ORDER-1001",
+      "locale": "en-GB",
+      "success_url_redirect": "https://yoursite.com/success",
+      "fail_url_redirect": "https://yoursite.com/failure",
+      "test_transaction": true
+    }'
+  ```
+
+  ```javascript Node.js
+  const response = await fetch('https://core.quidkey.com/api/v1/redirect-payment-requests', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Idempotency-Key': 'order-1001-attempt-1',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      merchant_id: process.env.QUIDKEY_MERCHANT_ID,
+      customer: {
+        name: 'Jane Buyer',
+        email: 'jane@example.com',
+        phone_number: '+447700900123'
+      },
+      billing_address: {
+        address_line1: '1 Market Street',
+        city: 'London',
+        postal_code: 'EC1A 1AA',
+        country: 'GB'
+      },
+      amount: 2550,           // £25.50 in minor units
+      currency: 'GBP',
+      payment_reference: 'ORDER-1001',
+      locale: 'en-GB',
+      success_url_redirect: 'https://yoursite.com/success',
+      fail_url_redirect: 'https://yoursite.com/failure',
+      test_transaction: true
+    })
+  });
+
+  const { data } = await response.json();
+  console.log('Redirect the buyer to:', data.redirect_url);
+  ```
+
+  ```python Python
+  import os, requests
+
+  response = requests.post(
+      'https://core.quidkey.com/api/v1/redirect-payment-requests',
+      headers={
+          'Authorization': f'Bearer {access_token}',
+          'Idempotency-Key': 'order-1001-attempt-1'
+      },
+      json={
+          'merchant_id': os.getenv('QUIDKEY_MERCHANT_ID'),
+          'customer': {
+              'name': 'Jane Buyer',
+              'email': 'jane@example.com',
+              'phone_number': '+447700900123'
+          },
+          'billing_address': {
+              'address_line1': '1 Market Street',
+              'city': 'London',
+              'postal_code': 'EC1A 1AA',
+              'country': 'GB'
+          },
+          'amount': 2550,         # £25.50 in minor units
+          'currency': 'GBP',
+          'payment_reference': 'ORDER-1001',
+          'locale': 'en-GB',
+          'success_url_redirect': 'https://yoursite.com/success',
+          'fail_url_redirect': 'https://yoursite.com/failure',
+          'test_transaction': True
+      }
+  )
+
+  data = response.json()['data']
+  print('Redirect the buyer to:', data['redirect_url'])
+  ```
+
+  </CodeGroup>
+
+  <Check>
+  A successful call returns **201 Created** with `{ "success": true, "data": { "redirect_url": "..." } }`. Save the `redirect_url`.
+  </Check>
+</Step>
+
+<Step title="Redirect the buyer">
+  Send the buyer's browser to the `redirect_url`. It opens a Quidkey-hosted bank page where they pick their bank and approve the payment. When they finish, Quidkey sends them to your `success_url_redirect` or `fail_url_redirect`.
+
+  ```javascript Node.js
+  // In your route handler, after creating the payment:
+  res.redirect(303, data.redirect_url);
+  ```
+
+  <Warning>
+  The redirect back to your site tells you the buyer **returned**, not that the payment **settled**. Treat the webhook as authoritative before fulfilling the order.
+  </Warning>
+</Step>
+
+<Step title="Verify the webhook">
+  Quidkey sends a webhook to your registered endpoint with the final result. Listen for `quidkey.payment_request.succeeded` and only then mark the order as paid.
+
+  <Card title="Set Up Webhooks" icon="webhook" href="/guides/payment-api/concepts/webhooks">
+    Register your endpoint, verify signatures, and handle every payment status event
+  </Card>
+</Step>
+</Steps>
+
+## What's Next
+
+You just built the Redirect flow. Explore the full feature set, or pick a different integration path.
+
+<CardGroup cols={2}>
+<Card title="Redirect (Pay by Bank)" icon="arrow-up-right-from-square" href="/guides/payment-api/accept-a-payment/redirect">
+  The full guide: field reference, deep-linking to a bank, and the bank button
+</Card>
+
+<Card title="Embedded (with Stripe)" icon="credit-card" href="/guides/payment-api/accept-a-payment/embedded">
+  Add Quidkey inline alongside your Stripe Payment Element
+</Card>
+
+<Card title="Hosted Checkout" icon="link" href="/guides/payment-api/accept-a-payment/hosted-checkout">
+  Generate a shareable checkout link in one API call
+</Card>
+
+<Card title="API Reference" icon="terminal" href="/api-reference/introduction">
+  Explore every endpoint with an interactive playground
+</Card>
+</CardGroup>

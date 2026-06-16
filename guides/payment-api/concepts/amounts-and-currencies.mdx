@@ -1,0 +1,98 @@
+---
+title: "Amounts & Currencies"
+description: "How Quidkey represents money: integer minor units and ISO 4217 currencies"
+icon: "coins"
+---
+
+The Payment API represents money the same way Stripe does: amounts are **integer minor units**, and currencies are **ISO 4217** codes. Getting this right is the single most important detail when creating a payment.
+
+## Amounts Are Integer Minor Units
+
+On the redirect, embedded, and hosted checkout endpoints, `amount` is an **integer** in the currency's smallest unit — pence for GBP, cents for EUR/USD. This matches Stripe's `unit_amount`.
+
+| Display amount | Currency | `amount` to send |
+|----------------|----------|------------------|
+| £19.99 | GBP | `1999` |
+| £0.20 | GBP | `20` |
+| €100.00 | EUR | `10000` |
+| $5.00 | USD | `500` |
+
+```json
+{
+  "amount": 1999,
+  "currency": "GBP",
+  "locale": "en"
+}
+```
+
+<Warning>
+**The 100× footgun.** Sending `20` does **not** mean £20 — it means **£0.20**. To charge £20.00, send `2000`. A decimal value such as `19.99` is rejected with a `400` validation error. Always multiply major units by 100 (for two-decimal currencies) before sending.
+</Warning>
+
+To convert a display price to minor units, multiply by 100 and round to an integer:
+
+<CodeGroup>
+
+```javascript Node.js
+// £19.99 -> 1999
+const amount = Math.round(19.99 * 100); // 1999
+```
+
+```python Python
+# £19.99 -> 1999
+amount = round(19.99 * 100)  # 1999
+```
+
+```bash cURL
+# £19.99 is sent as the integer 1999
+curl -X POST 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{ "amount": 1999, "currency": "GBP", "locale": "en" }'
+```
+
+</CodeGroup>
+
+<Tip>
+Webhook payloads use the **same** representation: `data.object.amount` is an integer in minor units. Format it back to a display value (divide by 100) only at the presentation layer.
+</Tip>
+
+## Currencies Are ISO 4217
+
+The `currency` field is an ISO 4217 currency code, for example `GBP`, `EUR`, or `USD`. The currency you send determines how `amount` is interpreted.
+
+<Note>
+There is **no FX (currency conversion)** on the redirect payment path. The payment is created and settled in the currency you specify.
+</Note>
+
+## Legacy Decimal Endpoint
+
+<Warning>
+The legacy `POST /api/v1/payment-requests` (v1) endpoint takes a **decimal** amount in **major** units — `"19.99"` for £19.99 — not minor units. It is retained for backward compatibility only. **New integrations should use the minor-unit endpoints** ([redirect](/guides/payment-api/accept-a-payment/redirect), [embedded](/guides/payment-api/accept-a-payment/embedded), and [hosted checkout](/guides/payment-api/accept-a-payment/hosted-checkout)).
+</Warning>
+
+| Endpoint | Amount format | Example for £19.99 |
+|----------|---------------|--------------------|
+| `POST /api/v1/redirect-payment-requests` | Integer minor units | `1999` |
+| Embedded / hosted checkout | Integer minor units | `1999` |
+| `POST /api/v1/payment-requests` (legacy v1) | Decimal major units | `"19.99"` |
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Accept a Payment (Redirect)" icon="arrow-right-arrow-left" href="/guides/payment-api/accept-a-payment/redirect">
+  Create a payment with minor-unit amounts
+</Card>
+
+<Card title="Errors" icon="triangle-exclamation" href="/guides/payment-api/concepts/errors">
+  Validation errors from bad amounts
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/guides/payment-api/concepts/webhooks">
+  Amounts in webhook payloads
+</Card>
+
+<Card title="Testing" icon="flask" href="/guides/payment-api/concepts/testing">
+  Try payments in the sandbox
+</Card>
+</CardGroup>

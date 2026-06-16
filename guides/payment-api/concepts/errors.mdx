@@ -1,0 +1,182 @@
+---
+title: "Errors"
+description: "Understand the error envelope, HTTP status codes, and how to handle failures"
+icon: "triangle-exclamation"
+---
+
+When a Payment API request fails, Quidkey returns a consistent JSON envelope and a meaningful HTTP status code. Use the status code and `code` for programmatic handling, and `message` for logging.
+
+## Error Envelope
+
+Every error response has `success: false` and an `error` object:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Human-readable error message",
+    "errors": [
+      {
+        "field": "amount",
+        "message": "Amount must be greater than 0"
+      }
+    ]
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `error.code` | Stable, machine-readable error code. Branch on this in your code. |
+| `error.message` | Human-readable description. Use for logs and debugging, not for control flow. |
+| `error.errors` | Present on validation failures (`400`). An array of per-field problems. |
+
+<Tip>
+Always branch on `error.code`, never on `error.message`. Messages may be reworded over time; codes are stable.
+</Tip>
+
+## HTTP Status Codes
+
+| Status | Meaning | Notes |
+|--------|---------|-------|
+| `200` / `201` | Success | Request processed; resource created on `201`. |
+| `400` | Validation error | Malformed or invalid input. Field-level details in `errors[]`. |
+| `401` | `UNAUTHORIZED` | Missing, malformed, or expired access token. |
+| `403` | Forbidden | Authenticated, but insufficient permission for this action. |
+| `404` | Not found | Resource does not exist **or** belongs to another tenant. |
+| `409` | `IDEMPOTENT_REQUEST_IN_PROGRESS` | A request with the same idempotency key is still in flight. |
+| `410` | Gone | Resource expired or revoked (e.g. `PAYMENT_LINK_EXPIRED`). |
+| `422` | Unprocessable | Request is well-formed but cannot be fulfilled. |
+| `500` | Internal error | Server-side issue (rare). Safe to retry idempotent requests. |
+| `503` | `IDEMPOTENCY_STORE_UNAVAILABLE` | Idempotency store temporarily down. Retryable. |
+
+## Validation Errors (400)
+
+A `400` indicates the request body or parameters failed validation. The `errors[]` array pinpoints each offending field, so you can surface precise feedback.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Validation failed",
+    "errors": [
+      {
+        "field": "amount",
+        "message": "Amount must be a positive integer in minor units"
+      },
+      {
+        "field": "currency",
+        "message": "currency must be a valid ISO 4217 code"
+      }
+    ]
+  }
+}
+```
+
+<Tip>
+Amounts are **integer minor units** — `1999` means £19.99, not £1,999. Sending a decimal or a major-unit value is a common source of `400` validation errors. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+</Tip>
+
+## Cross-Tenant Access Returns 404
+
+If you request a resource that exists but belongs to **another merchant**, Quidkey returns `404`, not `403`.
+
+<Warning>
+This is deliberate. A `403` would confirm the resource exists, leaking information across tenants. Quidkey returns `404` so a resource you cannot access is **indistinguishable** from one that does not exist. Do not treat a `404` as proof a payment was never created.
+</Warning>
+
+## Authentication & Permission Errors
+
+| Code / Status | Meaning | Resolution |
+|---------------|---------|-----------|
+| `401 UNAUTHORIZED` | Missing or expired token | Refresh your access token and retry. See [Authentication](/guides/payment-api/concepts/authentication). |
+| `403` Forbidden | Token lacks the required permission | Verify the credentials have access to this operation. |
+| `404` Not found | Resource missing or cross-tenant | Check the ID; confirm it belongs to your merchant. |
+
+## Handling Errors
+
+<CodeGroup>
+
+```javascript Node.js
+const response = await fetch(url, options);
+const body = await response.json();
+
+if (!body.success) {
+  const { code, message, errors } = body.error;
+
+  switch (code) {
+    case 'UNAUTHORIZED':
+      // Refresh the access token and retry once
+      break;
+    case 'IDEMPOTENT_REQUEST_IN_PROGRESS':
+      // Wait briefly, then retry with the SAME idempotency key
+      break;
+    case 'IDEMPOTENCY_STORE_UNAVAILABLE':
+      // Retry with backoff; the request was not processed
+      break;
+    case 'INVALID_INPUT':
+      // Surface field errors to the caller
+      for (const e of errors ?? []) console.error(e.field, e.message);
+      break;
+    default:
+      console.error(code, message);
+  }
+}
+```
+
+```python Python
+response = requests.post(url, **options)
+body = response.json()
+
+if not body['success']:
+    error = body['error']
+    code = error['code']
+
+    if code == 'UNAUTHORIZED':
+        ...  # Refresh the access token and retry once
+    elif code == 'IDEMPOTENT_REQUEST_IN_PROGRESS':
+        ...  # Wait briefly, then retry with the SAME idempotency key
+    elif code == 'IDEMPOTENCY_STORE_UNAVAILABLE':
+        ...  # Retry with backoff; the request was not processed
+    elif code == 'INVALID_INPUT':
+        for e in error.get('errors', []):
+            print(e['field'], e['message'])
+    else:
+        print(code, error['message'])
+```
+
+```bash cURL
+# Inspect the status code and body
+curl -i 'https://core.quidkey.com/api/v1/redirect-payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{ "amount": 1999, "currency": "GBP", "locale": "en" }'
+```
+
+</CodeGroup>
+
+<Info>
+**Retry guidance:** retry `409`, `503`, and `500` with exponential backoff. Do **not** blindly retry `400`, `401`, `403`, `404`, or `410` — fix the request or credentials first.
+</Info>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Idempotency" icon="fingerprint" href="/guides/payment-api/concepts/idempotency">
+  Safe retries for create requests
+</Card>
+
+<Card title="Authentication" icon="key" href="/guides/payment-api/concepts/authentication">
+  Resolve 401 errors with token refresh
+</Card>
+
+<Card title="Amounts & Currencies" icon="coins" href="/guides/payment-api/concepts/amounts-and-currencies">
+  Avoid the most common validation error
+</Card>
+
+<Card title="API Reference" icon="code" href="/api-reference/introduction">
+  Response format and conventions
+</Card>
+</CardGroup>

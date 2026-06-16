@@ -113,6 +113,54 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Payment API",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "guides/payment-api/overview",
+              "guides/payment-api/quickstart"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "guides/payment-api/concepts/authentication",
+              "guides/payment-api/concepts/idempotency",
+              "guides/payment-api/concepts/errors",
+              "guides/payment-api/concepts/webhooks",
+              "guides/payment-api/concepts/testing",
+              "guides/payment-api/concepts/amounts-and-currencies"
+            ]
+          },
+          {
+            "group": "Accept a payment",
+            "pages": [
+              "guides/payment-api/accept-a-payment/redirect",
+              "guides/payment-api/accept-a-payment/embedded",
+              "guides/payment-api/accept-a-payment/hosted-checkout"
+            ]
+          },
+          {
+            "group": "API reference",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "POST /api/v1/oauth2/token",
+              "POST /api/v1/oauth2/refresh",
+              "POST /api/v1/payment-requests",
+              "POST /api/v1/embedded/payment-requests",
+              "PATCH /api/v1/embedded/payment-requests",
+              "POST /api/v1/payment-links",
+              "GET /api/v1/payment-links/{id}",
+              "GET /api/v1/payments/{paymentRequestId}/status",
+              "POST /api/v1/webhooks",
+              "POST /api/v1/webhooks/secret",
+              "POST /api/v1/webhooks/secret/revoke"
+            ]
+          }
+        ]
       }
     ]
   },

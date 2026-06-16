@@ -1,0 +1,388 @@
+---
+title: "Webhooks"
+description: "Receive payment results securely: register endpoints, verify signatures, and handle events"
+icon: "webhook"
+---
+
+Webhooks are how your backend learns the outcome of a payment. When a payment changes state, Quidkey delivers a signed event to your registered URL. **This is the source of truth** — never rely on a browser redirect to confirm a payment.
+
+<Warning>
+Redirects can fail, be interrupted, or be triggered by a customer who never paid. Always confirm payment via the webhook (or the [status endpoint](#reconciling-missed-events)), not the redirect.
+</Warning>
+
+## Register Your Endpoint
+
+<Steps>
+
+<Step title="Register your webhook URL">
+Tell Quidkey where to deliver events.
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "webhook_url": "https://api.yoursite.com/webhooks/quidkey"
+  }'
+```
+</Step>
+
+<Step title="Generate a signing secret">
+Generate the secret used to sign every event.
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+The response returns the secret:
+
+```json
+{
+  "success": true,
+  "data": { "webhook_secret": "whsec_4eC39HqLyjWDarjtT1zdp7dc..." }
+}
+```
+
+<Warning>
+The `webhook_secret` is returned **once**. Store it immediately in a secure vault (AWS Secrets Manager, HashiCorp Vault, etc.). If you lose it, generate a new one.
+</Warning>
+</Step>
+
+<Step title="Revoke the secret (if needed)">
+Roll or revoke the secret during incident response. Generate a new one afterwards.
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret/revoke' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+</Step>
+
+</Steps>
+
+## Event Payload
+
+Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be reused. The payment object lives at `data.object`.
+
+```json
+{
+  "id": "evt_28b2d68f",
+  "object": "event",
+  "created": 1716148300,
+  "type": "quidkey.payment_request.succeeded",
+  "data": {
+    "object": {
+      "id": "pr_782516093",
+      "amount": 1999,
+      "currency": "GBP",
+      "status": "COMPLETED",
+      "test": false,
+      "metadata": {
+        "order_id": "ORD-123",
+        "payment_token": "ptok_...",
+        "bank_name": "Monzo"
+      },
+      "fees": {
+        "total_fees": 0.30,
+        "fees_currency": "GBP",
+        "fees_breakdown": [
+          {
+            "id": "fee_percentage_123",
+            "type": "percentage",
+            "amount": 0.30,
+            "currency": "GBP",
+            "rate_type": "domestic_percent_fee",
+            "rate_value": 1.5,
+            "notes": "1.5% fee on 19.99 GBP"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique event ID (`evt_...`). **Use this to de-duplicate** — see [below](#delivery--de-duplication). |
+| `object` | Always `event`. |
+| `created` | Event creation time, Unix epoch seconds. |
+| `type` | The event type — see the [catalog](#event-catalog). |
+| `data.object.id` | The payment request ID. |
+| `data.object.amount` | Amount in **integer minor units** (see [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies)). |
+| `data.object.currency` | ISO 4217 currency code. |
+| `data.object.status` | Underlying payment status. |
+| `data.object.test` | `true` for sandbox payments. See [Testing](/guides/payment-api/concepts/testing). |
+| `data.object.metadata` | Includes `order_id`, `payment_token`, and `bank_name`. |
+| `data.object.fees` | Fee breakdown. Included only on **succeeded** events. |
+
+## Verify Every Event
+
+Quidkey signs each delivery with an HMAC. **You must verify the signature before trusting or parsing the payload**, otherwise anyone who discovers your URL could forge events.
+
+### Signature Headers
+
+Each request includes these headers:
+
+| Header | Description |
+|--------|-------------|
+| `Stripe-Signature` | `t=<unix-ts>,v1=<hex-hmac>` |
+| `X-Signature` | Same value as `Stripe-Signature` (use either) |
+| `X-Timestamp` | Unix epoch seconds (the `t` value) |
+| `X-Client-Id` | Your `client_id` |
+
+<Note>
+`Stripe-Signature` and `X-Signature` carry the **identical** value. Use `Stripe-Signature` with the Stripe SDK, or either header with a custom verifier.
+</Note>
+
+### How the Signature Is Computed
+
+The signature is an **HMAC SHA-256** over the string `` `${timestamp}.${rawBody}` `` (the timestamp, a literal dot, then the raw request body), keyed by your webhook signing secret.
+
+<Warning>
+The HMAC key is the **full** secret, including the `whsec_` prefix, used **verbatim**. Do **not** strip `whsec_` before computing the HMAC.
+</Warning>
+
+<Warning>
+Verify against the **raw request body bytes**, exactly as received. If your framework parses JSON before you can read the raw body, the bytes change and verification will fail. Capture the raw body first (e.g. `express.raw()`), then parse only after the signature checks out.
+</Warning>
+
+### Verification Code
+
+<Tabs>
+
+<Tab title="Stripe SDK (Node.js)">
+Quidkey's envelope and signature scheme are Stripe-compatible, so the Stripe SDK verifies them directly. Pass the **raw** body and the `Stripe-Signature` header, keyed by your full `whsec_...` secret.
+
+```javascript
+import express from 'express';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_API_KEY);
+const app = express();
+
+// IMPORTANT: raw body so the bytes match what was signed
+app.post(
+  '/webhooks/quidkey',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,                       // raw Buffer
+        req.get('stripe-signature'),    // t=...,v1=...
+        process.env.QUIDKEY_WEBHOOK_SECRET, // full "whsec_..." secret
+      );
+    } catch (err) {
+      return res.status(400).send(`Invalid signature: ${err.message}`);
+    }
+
+    // event is verified — safe to handle
+    handleEvent(event);
+    res.status(200).send('OK');
+  },
+);
+```
+</Tab>
+
+<Tab title="Plain Node.js (HMAC)">
+If you do not use the Stripe SDK, verify the HMAC yourself with a **timing-safe** comparison and a timestamp tolerance to reject replays.
+
+```javascript
+import crypto from 'crypto';
+import express from 'express';
+
+const TOLERANCE_SECONDS = 300; // reject events older than 5 minutes
+
+function verifyQuidkeySignature(rawBody, signatureHeader, secret) {
+  const match = signatureHeader?.match(/^t=(\d+),v1=([a-f0-9]+)$/);
+  if (!match) throw new Error('Malformed signature header');
+  const [, timestamp, providedV1] = match;
+
+  // Reject stale events (replay protection)
+  const age = Math.floor(Date.now() / 1000) - Number(timestamp);
+  if (Math.abs(age) > TOLERANCE_SECONDS) throw new Error('Timestamp outside tolerance');
+
+  // HMAC over `${timestamp}.${rawBody}`, keyed by the FULL secret (incl. whsec_)
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest('hex');
+
+  const a = Buffer.from(expected);
+  const b = Buffer.from(providedV1);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    throw new Error('Signature mismatch');
+  }
+}
+
+const app = express();
+app.post(
+  '/webhooks/quidkey',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    try {
+      verifyQuidkeySignature(
+        req.body,                       // raw Buffer
+        req.get('x-signature'),         // or req.get('stripe-signature')
+        process.env.QUIDKEY_WEBHOOK_SECRET, // full "whsec_..." secret
+      );
+    } catch (err) {
+      return res.status(400).send(`Invalid signature: ${err.message}`);
+    }
+
+    const event = JSON.parse(req.body.toString()); // parse only after verifying
+    handleEvent(event);
+    res.status(200).send('OK');
+  },
+);
+```
+</Tab>
+
+<Tab title="Plain Python (HMAC)">
+```python
+import hashlib
+import hmac
+import time
+
+TOLERANCE_SECONDS = 300  # reject events older than 5 minutes
+
+def verify_quidkey_signature(raw_body: bytes, signature_header: str, secret: str) -> None:
+    # Header format: t=<unix>,v1=<hex-hmac>
+    parts = dict(p.split('=', 1) for p in signature_header.split(','))
+    timestamp, provided_v1 = parts['t'], parts['v1']
+
+    # Reject stale events (replay protection)
+    if abs(int(time.time()) - int(timestamp)) > TOLERANCE_SECONDS:
+        raise ValueError('Timestamp outside tolerance')
+
+    # HMAC over f"{timestamp}.{raw_body}", keyed by the FULL secret (incl. whsec_)
+    signed_payload = f"{timestamp}.".encode() + raw_body
+    expected = hmac.new(secret.encode(), signed_payload, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, provided_v1):
+        raise ValueError('Signature mismatch')
+```
+</Tab>
+
+</Tabs>
+
+## Event Catalog
+
+| Event type | When it fires | Notes |
+|------------|---------------|-------|
+| `quidkey.payment_request.succeeded` | Payment is `COMPLETED` and funds `RECEIVED` | Includes the `fees` object. Fulfil the order here. |
+| `quidkey.payment_request.failed` | The payment attempt failed | No fees. |
+| `quidkey.payment_request.canceled` | The payment was cancelled | **One `l`** — see the warning below. |
+| `quidkey.payment_request.pending` | Payment is in progress | The default in-flight state. |
+| `quidkey.payment_request.reversed` | A refund or reversal occurred | Adjust your records accordingly. |
+
+<Warning>
+The cancellation event is spelled `quidkey.payment_request.canceled` — **one `l`**, US spelling. Matching `cancelled` (two `l`s) will silently miss the event.
+</Warning>
+
+### Handling Events
+
+```javascript
+function handleEvent(event) {
+  // De-duplicate: skip if this event.id was already processed
+  if (alreadyProcessed(event.id)) return;
+
+  const payment = event.data.object;
+
+  switch (event.type) {
+    case 'quidkey.payment_request.succeeded':
+      fulfilOrder(payment.metadata.order_id, payment);
+      if (payment.fees) recordFees(payment.metadata.order_id, payment.fees);
+      break;
+    case 'quidkey.payment_request.failed':
+      markFailed(payment.metadata.order_id);
+      break;
+    case 'quidkey.payment_request.canceled': // one 'l'
+      markCancelled(payment.metadata.order_id);
+      break;
+    case 'quidkey.payment_request.pending':
+      markPending(payment.metadata.order_id);
+      break;
+    case 'quidkey.payment_request.reversed':
+      reverseOrder(payment.metadata.order_id);
+      break;
+  }
+
+  markProcessed(event.id);
+}
+```
+
+## Delivery & De-duplication
+
+Quidkey makes a **single** delivery attempt per event. There is **no automatic retry**. If your endpoint is down or returns a non-`2xx`, the event is not retried automatically — you resend it manually.
+
+<Info>
+**Manual resend.** You can resend a delivery from the Quidkey Console. A resend **reuses the same `event.id`** and is re-signed with a **fresh** timestamp (so the signature and timestamp tolerance still validate).
+</Info>
+
+<Warning>
+Because resends reuse the same `event.id`, your handler **must de-duplicate on `event.id`**. Record processed event IDs and skip any you have already handled — otherwise a resend will fulfil the same order twice.
+</Warning>
+
+| Property | Behaviour |
+|----------|-----------|
+| Delivery attempts | Single attempt; **no** automatic retry |
+| Resend | Manual, from the Console |
+| Resend `event.id` | Same as the original → **de-duplicate on it** |
+| Resend signature | Re-signed with a fresh timestamp |
+
+## Reconciling Missed Events
+
+If you suspect a webhook was missed (endpoint downtime, etc.), reconcile by querying the payment's current status directly. This protected merchant endpoint returns the authoritative state:
+
+```bash
+curl 'https://core.quidkey.com/api/v1/merchants/MERCHANT_ID/payment-requests/PAYMENT_REQUEST_ID/status' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+<Tip>
+Use the status endpoint as a backstop, not a substitute for webhooks. Poll it for payments where you expected an event but never received one, then resend from the Console if needed.
+</Tip>
+
+## Best Practices
+
+<AccordionGroup>
+
+<Accordion title="Verify before you parse">
+Capture the raw body, verify the signature against it (full secret, including `whsec_`), and only then parse the JSON. Reject anything that fails with a `400`.
+</Accordion>
+
+<Accordion title="De-duplicate on event.id">
+Persist every processed `event.id`. Resends reuse the ID, so this is what keeps fulfilment exactly-once.
+</Accordion>
+
+<Accordion title="Respond fast, work async">
+Return `200` quickly and do heavy work (fulfilment, emails) asynchronously. A slow handler can time out the delivery.
+</Accordion>
+
+<Accordion title="Enforce a timestamp tolerance">
+Reject events whose `X-Timestamp` is outside ~300 seconds of now to defend against replay attacks.
+</Accordion>
+
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Testing" icon="flask" href="/guides/payment-api/concepts/testing">
+  Trigger and verify test webhooks
+</Card>
+
+<Card title="Errors" icon="triangle-exclamation" href="/guides/payment-api/concepts/errors">
+  Status codes and the error envelope
+</Card>
+
+<Card title="Amounts & Currencies" icon="coins" href="/guides/payment-api/concepts/amounts-and-currencies">
+  How amounts appear in payloads
+</Card>
+
+<Card title="Accept a Payment (Embedded)" icon="credit-card" href="/guides/payment-api/accept-a-payment/embedded">
+  Build the payment flow that triggers these events
+</Card>
+</CardGroup>
