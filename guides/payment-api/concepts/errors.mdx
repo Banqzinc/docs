@@ -44,7 +44,7 @@ Always branch on `error.code`, never on `error.message`. Messages may be reworde
 |--------|---------|-------|
 | `200` / `201` | Success | Request processed; resource created on `201`. |
 | `400` | `VALIDATION_ERROR` | Malformed or invalid input. Field-level details in `error.metadata.errors`. |
-| `401` | `UNAUTHORIZED` | Missing, malformed, or expired access token. |
+| `401` | `NO_TOKEN` / `INVALID_TOKEN` | Missing, malformed, or expired access token. Branch on the **status**, not the code. |
 | `403` | Forbidden | Authenticated, but insufficient permission for this action. |
 | `404` | Not found | Resource does not exist **or** belongs to another tenant. |
 | `409` | `IDEMPOTENT_REQUEST_IN_PROGRESS` | A request with the same idempotency key is still in flight. |
@@ -95,7 +95,7 @@ This is deliberate. A `403` would confirm the resource exists, leaking informati
 
 | Code / Status | Meaning | Resolution |
 |---------------|---------|-----------|
-| `401 UNAUTHORIZED` | Missing or expired token | Refresh your access token and retry. See [Authentication](/guides/payment-api/concepts/authentication). |
+| `401` (`NO_TOKEN` / `INVALID_TOKEN`) | Missing or expired token | Refresh your access token and retry. See [Authentication](/guides/payment-api/concepts/authentication). |
 | `403` Forbidden | Token lacks the required permission | Verify the credentials have access to this operation. |
 | `404` Not found | Resource missing or cross-tenant | Check the ID; confirm it belongs to your merchant. |
 
@@ -123,10 +123,10 @@ const body = await response.json();
 if (!body.success) {
   const { code, message, metadata } = body.error;
 
-  switch (code) {
-    case 'UNAUTHORIZED':
-      // Refresh the access token and retry once
-      break;
+  // A 401 (code NO_TOKEN or INVALID_TOKEN) means the token is missing or expired.
+  if (response.status === 401) {
+    // Refresh the access token and retry once
+  } else switch (code) {
     case 'IDEMPOTENT_REQUEST_IN_PROGRESS':
       // Wait briefly, then retry with the SAME idempotency key
       break;
@@ -151,7 +151,8 @@ if not body['success']:
     error = body['error']
     code = error['code']
 
-    if code == 'UNAUTHORIZED':
+    # A 401 (code NO_TOKEN or INVALID_TOKEN) means the token is missing or expired.
+    if response.status_code == 401:
         ...  # Refresh the access token and retry once
     elif code == 'IDEMPOTENT_REQUEST_IN_PROGRESS':
         ...  # Wait briefly, then retry with the SAME idempotency key

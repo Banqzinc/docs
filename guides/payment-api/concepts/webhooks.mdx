@@ -66,13 +66,13 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
 
 ```json
 {
-  "id": "evt_28b2d68f",
+  "id": "evt_9f8b2c14-3d6a-4e21-bb02-7c1d9a4e5f60",
   "object": "event",
   "created": 1716148300,
   "type": "quidkey.payment_request.succeeded",
   "data": {
     "object": {
-      "id": "pr_782516093",
+      "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
       "status": "COMPLETED",
@@ -87,7 +87,7 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
         "fees_currency": "GBP",
         "fees_breakdown": [
           {
-            "id": "fee_percentage_123",
+            "id": "c1f0a9e7-5b62-4d38-9a14-8e3b6c2d70f5",
             "type": "percentage",
             "amount": "30",
             "currency": "GBP",
@@ -289,12 +289,12 @@ The `failed` and `reversed` events carry the same envelope, without a `fees` obj
 
 ```json failed
 {
-  "id": "evt_3a9c1f72",
+  "id": "evt_2b6d4e90-8c31-4a57-bf09-1d2e3f4a5b6c",
   "object": "event",
   "type": "quidkey.payment_request.failed",
   "data": {
     "object": {
-      "id": "pr_782516093",
+      "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
       "status": "FAILED",
@@ -307,12 +307,12 @@ The `failed` and `reversed` events carry the same envelope, without a `fees` obj
 
 ```json reversed
 {
-  "id": "evt_5d4b2e81",
+  "id": "evt_7e1a9c52-4f80-4b63-a2d1-6c9b8e0f3a47",
   "object": "event",
   "type": "quidkey.payment_request.reversed",
   "data": {
     "object": {
-      "id": "pr_782516093",
+      "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
       "status": "REVERSED",

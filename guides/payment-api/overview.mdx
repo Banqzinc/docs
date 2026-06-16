@@ -9,7 +9,7 @@ Accept bank-to-bank payments with Quidkey: create a payment from your backend, s
 You choose how the payment is presented to the buyer. Want zero frontend work? Use a **Redirect** and send the buyer to a Quidkey-hosted bank page. Already running a Stripe checkout? Drop Quidkey in alongside it with the **Embedded** flow. Sending an invoice? Generate a **Hosted Checkout** link and share the URL.
 
 <Note>
-**Amounts are always integer minor units** across every endpoint in the Payment API: `1000` = £10.00, `2550` = €25.50. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
+**Amounts are integer minor units** on every Payment API endpoint (Redirect, Embedded, and Hosted Checkout): `1000` = £10.00, `2550` = €25.50. See [Amounts & Currencies](/guides/payment-api/concepts/amounts-and-currencies).
 </Note>
 
 <Info>
@@ -121,7 +121,7 @@ sequenceDiagram
 </Card>
 
 <Card title="Amounts & Currencies" icon="coins" href="/guides/payment-api/concepts/amounts-and-currencies">
-  Integer minor units and ISO 4217 currencies, everywhere
+  Integer minor units and ISO 4217 currencies across the Payment API
 </Card>
 
 <Card title="API Reference" icon="terminal" href="/api-reference/introduction">

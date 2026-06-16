@@ -96,7 +96,7 @@ curl 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
   -d '{ ... }'
 ```
 
-A missing, malformed, or expired token returns `401 UNAUTHORIZED`. See [Errors](/guides/payment-api/concepts/errors) for the full error envelope.
+A missing, malformed, or expired token returns `401` (with code `NO_TOKEN` or `INVALID_TOKEN`). Branch on the `401` status rather than the code. See [Errors](/guides/payment-api/concepts/errors) for the full error envelope.
 
 ## Refresh Before Expiry
 
@@ -135,7 +135,7 @@ access_token = data['access_token']
 
 </CodeGroup>
 
-The response has the same shape as the token endpoint, including a fresh `access_token` and `expires_in`.
+The response returns a fresh `access_token` and `expires_in`. It does **not** return a new `refresh_token`: reuse your existing one until it expires.
 
 <Tip>
 Refresh a little **early** (for example when the token is within ~60 seconds of expiry) so an in-flight request never fails on a token that expires mid-call.
@@ -153,7 +153,7 @@ sequenceDiagram
     API-->>App: 200 OK
     Note over App: ~15 min later, before expiry
     App->>API: POST /oauth2/refresh (refresh_token)
-    API-->>App: new access_token + refresh_token
+    API-->>App: new access_token
 ```
 
 | Token | Validity | Renewed by |
@@ -168,7 +168,7 @@ When the `refresh_token` itself expires (after 24 hours), authenticate again fro
 <AccordionGroup>
 
 <Accordion title="Keep credentials server-side">
-Store `client_id` and `client_secret` in environment variables or a secrets manager (AWS Secrets Manager, HashiCorp Vault, etc.). Never ship them to a browser, mobile binary, or public repository.
+Store `client_id` and `client_secret` in environment variables or a secrets manager (Google Secret Manager, HashiCorp Vault, etc.). Never ship them to a browser, mobile binary, or public repository.
 </Accordion>
 
 <Accordion title="Cache and reuse the access token">
@@ -176,7 +176,7 @@ Hold the `access_token` in memory across requests for its full lifetime instead 
 </Accordion>
 
 <Accordion title="Handle 401 gracefully">
-If a request returns `401 UNAUTHORIZED`, refresh the token once and retry. If the refresh also fails, fall back to a full `client_credentials` exchange.
+If a request returns `401`, refresh the token once and retry. If the refresh also fails, fall back to a full `client_credentials` exchange.
 </Accordion>
 
 </AccordionGroup>

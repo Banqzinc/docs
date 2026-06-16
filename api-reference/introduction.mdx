@@ -11,6 +11,8 @@ Quidkey provides separate environments for development and production:
 |------------|----------|---------|
 | **Base URL** | `https://core.quidkey.com` | All API requests |
 
+All endpoints are served under the `/api/v1` prefix (for example `https://core.quidkey.com/api/v1/oauth2/token`).
+
 <Warning>
 Always use `test_transaction: true` in development to avoid processing real payments.
 </Warning>
@@ -113,8 +115,8 @@ Common error codes you may encounter:
 
 | Code | Description | Resolution |
 |------|-------------|------------|
-| `INVALID_INPUT` | Request validation failed | Check the `errors` array for field-specific issues |
-| `UNAUTHORIZED` | Invalid or expired token | Refresh your access token |
+| `VALIDATION_ERROR` | Request validation failed | Check `error.metadata.errors` for field-specific issues |
+| `NO_TOKEN` / `INVALID_TOKEN` | Missing or expired token (HTTP `401`) | Refresh your access token; branch on the `401` status |
 | `MERCHANT_NOT_FOUND` | Invalid merchant ID | Verify your credentials |
 | `PAYMENT_REQUEST_NOT_FOUND` | Invalid payment token | Check token hasn't expired (15 min TTL) |
 | `PAYMENT_ALREADY_INITIATED` | Payment already in progress | Cannot update amount after customer selects bank |
