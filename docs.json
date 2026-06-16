@@ -150,12 +150,12 @@
             "pages": [
               "POST /api/v1/oauth2/token",
               "POST /api/v1/oauth2/refresh",
-              "POST /api/v1/payment-requests",
+              "POST /api/v1/payment-requests:redirect",
               "POST /api/v1/embedded/payment-requests",
               "PATCH /api/v1/embedded/payment-requests",
               "POST /api/v1/payment-links",
               "GET /api/v1/payment-links/{id}",
-              "GET /api/v1/payments/{paymentRequestId}/status",
+              "GET /api/v1/payment-requests/{paymentRequestId}/status",
               "POST /api/v1/webhooks",
               "POST /api/v1/webhooks/secret",
               "POST /api/v1/webhooks/secret/revoke"
