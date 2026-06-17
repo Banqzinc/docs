@@ -54,7 +54,7 @@ curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
 </CodeGroup>
 
 <Tip>
-Webhook payloads use the **same** representation: `data.object.amount` is an integer in minor units. Format it back to a display value (divide by 100) only at the presentation layer.
+Webhook payloads carry the same minor-unit **value**, but as a **JSON string**: `data.object.amount` (and the numeric `fees` fields) arrive as a stringified integer such as `"1999"`, not the number `1999`. Parse with `Number(...)` before doing arithmetic, and divide by 100 only at the presentation layer. See [Webhooks](/guides/payment-api/concepts/webhooks).
 </Tip>
 
 ## Currencies Are ISO 4217

@@ -75,7 +75,7 @@ Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be
       "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
-      "status": "COMPLETED",
+      "status": "completed",
       "test": false,
       "metadata": {
         "order_id": "ORD-123",
@@ -275,7 +275,7 @@ def verify_quidkey_signature(raw_body: bytes, signature_header: str, secret: str
 
 | Event type | When it fires | Notes |
 |------------|---------------|-------|
-| `quidkey.payment_request.succeeded` | The transaction reached `COMPLETED` (or `RECEIVED`) | Includes the `fees` object. Fulfil the order here. |
+| `quidkey.payment_request.succeeded` | The transaction reached `completed` (or `received`) | Includes the `fees` object. Fulfil the order here. |
 | `quidkey.payment_request.failed` | The payment attempt failed | No fees. |
 | `quidkey.payment_request.canceled` | The payment was cancelled | **One `l`**. See the warning below. |
 | `quidkey.payment_request.pending` | Payment is in progress | The default in-flight state. |
@@ -297,7 +297,7 @@ The `failed` and `reversed` events carry the same envelope, without a `fees` obj
       "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
-      "status": "FAILED",
+      "status": "failed",
       "test": false,
       "metadata": { "order_id": "ORD-123" }
     }
@@ -315,7 +315,7 @@ The `failed` and `reversed` events carry the same envelope, without a `fees` obj
       "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
       "amount": "1999",
       "currency": "GBP",
-      "status": "REVERSED",
+      "status": "completed",
       "test": false,
       "metadata": { "order_id": "ORD-123" }
     }
@@ -324,7 +324,7 @@ The `failed` and `reversed` events carry the same envelope, without a `fees` obj
 ```
 
 <Note>
-**Terminal vs transitional states.** `pending` is transitional and resolves to one of `succeeded`, `failed`, or `canceled`. `succeeded` is otherwise terminal, but a settled payment can still move to `reversed` later if it is refunded or reversed.
+**Terminal vs transitional states.** `pending` is transitional and resolves to one of `succeeded`, `failed`, or `canceled`. `succeeded` is otherwise terminal, but a settled payment can still move to `reversed` later if it is refunded or reversed. A reversal is identified by the event `type` (`quidkey.payment_request.reversed`); there is no distinct `reversed` status value, so `data.object.status` stays the underlying transaction status (e.g. `completed`).
 </Note>
 
 ### Handling Events
