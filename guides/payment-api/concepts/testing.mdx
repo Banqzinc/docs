@@ -1,0 +1,148 @@
+---
+title: "Testing"
+description: "Run payments against the sandbox without moving real money"
+icon: "flask"
+---
+
+Before going live, exercise the full payment flow in a sandbox. Quidkey routes test payments to a sandbox provider so you can integrate, verify webhooks, and rehearse edge cases, **with no real bank movement**.
+
+## Route a Payment to the Sandbox
+
+Pass `test_transaction: true` when you create a payment. Quidkey routes it to the sandbox provider instead of a live bank connection.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://core.quidkey.com/api/v1/payment-requests:redirect' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "amount": 1999,
+    "currency": "GBP",
+    "locale": "en-GB",
+    "test_transaction": true
+  }'
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://core.quidkey.com/api/v1/payment-requests:redirect',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: 1999,
+      currency: 'GBP',
+      locale: 'en-GB',
+      test_transaction: true,
+    }),
+  },
+);
+```
+
+```python Python
+response = requests.post(
+    'https://core.quidkey.com/api/v1/payment-requests:redirect',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+    },
+    json={
+        'amount': 1999,
+        'currency': 'GBP',
+        'locale': 'en-GB',
+        'test_transaction': True,
+    },
+)
+```
+
+</CodeGroup>
+
+<Note>Body abbreviated. See the [Redirect guide](/guides/payment-api/accept-a-payment/redirect) for the full required payload.</Note>
+
+<Warning>
+Always set `test_transaction: true` in development. A request without it is treated as **live** and may attempt a real bank movement.
+</Warning>
+
+## Identifying Test Events
+
+Webhooks for sandbox payments carry test markers, so your handler can tell sandbox traffic apart from production. The event payload includes a `test` flag (and `sandbox` indicators) on the payment object:
+
+```json
+{
+  "id": "evt_9f8b2c14-3d6a-4e21-bb02-7c1d9a4e5f60",
+  "object": "event",
+  "type": "quidkey.payment_request.succeeded",
+  "data": {
+    "object": {
+      "id": "4a7b1e2c-9d83-4f10-a6b5-2e9c7d041f8a",
+      "amount": "1999",
+      "currency": "GBP",
+      "status": "completed",
+      "test": true,
+      "metadata": { "order_id": "ORD-123", "payment_token": "ptok_..." }
+    }
+  }
+}
+```
+
+<Tip>
+Gate your fulfilment logic on `data.object.test`. In non-production environments, ignore live events; in production, ignore test events. This prevents a stray sandbox webhook from triggering real fulfilment.
+</Tip>
+
+## Sandbox vs. Live
+
+| Aspect | Sandbox (`test_transaction: true`) | Live |
+|--------|-------------------------------------|------|
+| Bank movement | None: simulated by the sandbox provider | Real funds move |
+| Webhook events | Same shapes, with `test`/`sandbox` markers | Production events |
+| Credentials | Use a separate set of credentials / webhook secret if you have them | Production credentials |
+
+<Note>
+If your account provides **separate** sandbox credentials and a separate webhook signing secret, use them for test traffic and keep them distinct from production. This keeps environments cleanly isolated.
+</Note>
+
+## A Typical Test Pass
+
+<Steps>
+
+<Step title="Create a test payment">
+Create a payment request with `test_transaction: true` and complete it through the sandbox flow.
+</Step>
+
+<Step title="Confirm the webhook arrives">
+Verify your endpoint receives the event, the signature validates, and `data.object.test` is `true`. See [Webhooks](/guides/payment-api/concepts/webhooks).
+</Step>
+
+<Step title="Exercise edge cases">
+Test failure and cancellation paths, and confirm your idempotency and error handling behave as expected.
+</Step>
+
+<Step title="Reconcile">
+Look up the payment via the status endpoint to confirm your records match Quidkey's.
+</Step>
+
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Webhooks" icon="webhook" href="/guides/payment-api/concepts/webhooks">
+  Verify signatures and handle test events
+</Card>
+
+<Card title="Accept a Payment (Redirect)" icon="arrow-right-arrow-left" href="/guides/payment-api/accept-a-payment/redirect">
+  Create your first test payment
+</Card>
+
+<Card title="Amounts & Currencies" icon="coins" href="/guides/payment-api/concepts/amounts-and-currencies">
+  Send amounts correctly in tests
+</Card>
+
+<Card title="Errors" icon="triangle-exclamation" href="/guides/payment-api/concepts/errors">
+  Test your error handling paths
+</Card>
+</CardGroup>
