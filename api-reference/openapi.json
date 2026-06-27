@@ -17596,6 +17596,18 @@
                 "type": "string"
               }
             }
+          },
+          "webhook_endpoints": {
+            "maxItems": 10,
+            "description": "Optional. Up to 10 registered webhook endpoints to fan this payment's webhooks out to, each signed with its own secret. An endpoint can be test-only, live-only, or both. Omit to use the no-reference precedence: the legacy default URL, then the merchant's default endpoint, then the single active endpoint.",
+            "type": "array",
+            "items": {
+              "description": "Name or id of a registered webhook endpoint to route this payment's webhooks to.",
+              "examples": [
+                "wizzair-prod"
+              ],
+              "type": "string"
+            }
           }
         }
       },
@@ -72707,7 +72719,10 @@
                 "redirect_urls": {
                   "success_url": "https://tryp.com/checkout/success",
                   "failure_url": "https://tryp.com/checkout/error"
-                }
+                },
+                "webhook_endpoints": [
+                  "wizzair-prod"
+                ]
               }
             }
           }

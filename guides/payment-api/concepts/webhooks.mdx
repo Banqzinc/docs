@@ -60,6 +60,18 @@ curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret/revoke' \
 
 </Steps>
 
+## Named Endpoints & Per-Payment Routing
+
+The single webhook URL above is the default destination for every payment. If you create payments through the [embedded integration](/guides/embedded-flow/overview), you can also register **multiple named endpoints** in the [Console](https://console.quidkey.com) (**Settings → Webhooks**) and route each payment to one or more of them.
+
+- Each endpoint has its own **URL**, its own **signing secret**, and an optional **test/live scope** (so a test-only receiver never sees live traffic).
+- An embedded payment names endpoints in its `webhook_endpoints` field, up to **10**. Its webhook is **fanned out** to every named endpoint, each signed with that endpoint's own secret. This is built for platforms that send on behalf of several downstream businesses, each verifying with its own secret.
+- When a payment names no endpoint, Quidkey resolves the destination in order: the default `webhook_url` above, then the merchant's **default endpoint**, then the single active endpoint.
+
+<Note>
+Named endpoints and per-payment routing apply to **embedded** payments only. Hosted-checkout and redirect payments always deliver to the single default `webhook_url` registered above. See [Named Webhook Endpoints](/guides/embedded-flow/after-payment#named-webhook-endpoints) for the full guide.
+</Note>
+
 ## Event Payload
 
 Quidkey sends a Stripe-style `Event` envelope, so existing Stripe tooling can be reused. The payment object lives at `data.object`.

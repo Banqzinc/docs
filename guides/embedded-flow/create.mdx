@@ -191,6 +191,7 @@ You'll receive a `payment_token` (valid for 15 minutes) to embed in your iframe.
 | `order.rewards` | object | No | Optional loyalty rewards (see below) |
 | `redirect_urls.success_url` | string | Yes | Where to redirect after successful payment |
 | `redirect_urls.failure_url` | string | Yes | Where to redirect after failed/cancelled payment |
+| `webhook_endpoints` | string[] | No | Route (fan out) this payment's webhooks to up to 10 named endpoints. See below. |
 
 <Note>
 **Amount format:** Use minor units (cents). `1000` = €10.00, `2550` = €25.50. This matches Stripe's format exactly.
@@ -216,6 +217,26 @@ Include a `rewards` object to display loyalty rewards during checkout:
 - `description`: text describing the reward (max 255 characters, optional)
 
 Rewards are distributed only on successful payment completion via webhook.
+</Accordion>
+
+<Accordion title="Webhook routing (optional)">
+**Leave this unset for normal use.** When you omit `webhook_endpoints`, the payment's webhooks follow your merchant [resolution order](/guides/embedded-flow/after-payment#resolution-order): your default `webhook_url`, then your default endpoint, then your single active endpoint. Most integrations never set this field.
+
+To send a payment's webhooks to specific [named endpoints](/guides/embedded-flow/after-payment#named-webhook-endpoints) instead (for platforms paying out on behalf of several businesses), add `webhook_endpoints` to the request body with up to **10** endpoint names:
+
+```bash
+curl -X POST 'https://core.quidkey.com/api/v1/embedded/payment-requests' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "customer": { "name": "John Doe", "email": "john@example.com", "phone": "+4917646793347", "country": "DE" },
+    "order": { "order_id": "ORD-123456", "amount": 2550, "currency": "EUR", "payment_reference": "Order #3451" },
+    "redirect_urls": { "success_url": "https://yoursite.com/success", "failure_url": "https://yoursite.com/failure" },
+    "webhook_endpoints": ["wizzair-prod"]
+  }'
+```
+
+The webhook is fanned out to every named endpoint, each signed with **its own** secret. A reference that is unknown, disabled, not owned by you, or whose test/live scope does not match the payment returns `400 UNKNOWN_WEBHOOK_ENDPOINT`, and the payment is not created.
 </Accordion>
 
 </AccordionGroup>
