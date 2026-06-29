@@ -18,7 +18,12 @@ Do not rely solely on the redirect to confirm payment. Always verify payment sta
 
 ## Webhook Setup
 
-### Register and Obtain a Signing Secret
+Quidkey supports two delivery models:
+
+- **Default webhook**: a single per-merchant URL, set via the API below and signed with your merchant secret. It is used for every payment that does not name an endpoint.
+- **Named webhook endpoints**: multiple destinations, each with its own signing secret and an optional test/live scope. You register them in the Console and route each payment to one or more of them by name. See [Named Webhook Endpoints](#named-webhook-endpoints).
+
+### Default Webhook: Register and Obtain a Signing Secret
 
 <Steps>
 
@@ -61,9 +66,63 @@ curl -X POST 'https://core.quidkey.com/api/v1/webhooks/secret/revoke' \
 
 </Steps>
 
+### Named Webhook Endpoints
+
+Platforms that create payments on behalf of several businesses (for example, a travel platform handling payments for multiple airlines) can register **multiple** webhook endpoints, each with its own URL and signing secret, then route each payment to the right one. Endpoints are managed in the Console, not the API.
+
+<Steps>
+
+<Step title="Open Webhooks settings">
+In the [Console](https://console.quidkey.com), switch into the relevant **merchant** context, then open **Settings → Webhooks**.
+</Step>
+
+<Step title="Add an endpoint">
+Select **Add endpoint** and provide:
+- **Name**: a stable, unique identifier you reference per payment (for example `wizzair-prod`). It cannot be changed after creation.
+- **URL**: the HTTPS or HTTP destination. Private, loopback, link-local, and metadata addresses are rejected.
+- **Signed**: leave enabled to receive an `X-Signature` header (recommended). Disable only for a destination that cannot verify signatures.
+- **Environment**: choose **Test**, **Live**, or **Both** (default). A test-only endpoint receives webhooks only for test payments, and a live-only endpoint only for live payments, so you can validate an integration against a test receiver without it ever seeing live traffic.
+</Step>
+
+<Step title="Copy the signing secret">
+A `whsec_...` secret is generated and shown **once**. Copy it immediately and share it with the destination out of band.
+
+<Warning>
+The secret is revealed only at creation and on rotation. If it is lost, rotate to issue a new one.
+</Warning>
+</Step>
+
+<Step title="Rotate or disable later">
+- **Rotate secret** issues a new secret and shows it once. The previous secret stops verifying **immediately** (there is no grace window), so coordinate rotation with the destination.
+- **Disable** stops new deliveries to the endpoint. Endpoints are disabled, never deleted, so a payment that already references one always resolves.
+</Step>
+
+</Steps>
+
+#### Route a payment to one or more endpoints
+
+Reference endpoints by name when you [create a payment request](/guides/embedded-flow/create), using the optional `webhook_endpoints` field. You can name up to **10** endpoints, and the payment's webhook is **fanned out** to every one of them (for example, the downstream business *and* your own platform receiver):
+
+```json
+{ "webhook_endpoints": ["wizzair-prod", "tryp-platform"] }
+```
+
+Each endpoint receives its own delivery, signed with **that endpoint's** secret (an unsigned endpoint receives no `X-Signature`). A reference that is unknown, disabled, not owned by you, or whose test/live scope does not match the payment is rejected at creation with `400 UNKNOWN_WEBHOOK_ENDPOINT`. The payment is not created, so fix the reference and retry.
+
+#### Resolution order
+
+When a payment does **not** name an endpoint, Quidkey resolves the destination in order:
+
+1. The default `webhook_url`, if set (signed with the merchant secret). Unchanged from today, so existing integrations are never re-routed.
+2. Otherwise, the merchant's **default endpoint**, if one is marked as default in the Console (signed with its own secret).
+3. Otherwise, if the merchant has exactly **one** active endpoint, that endpoint.
+4. Otherwise (no default URL, no default endpoint, and zero or multiple active endpoints) the delivery is recorded as `FAILED`. Quidkey never guesses between endpoints; mark a default endpoint, or name one per payment, to avoid this.
+
+A payment that names endpoints always uses them. For each named endpoint that is disabled, or whose test/live scope no longer matches the payment, that delivery is recorded as `FAILED` while the others still deliver; there is no fallback to the default.
+
 ### Webhook Payload
 
-Quidkey sends a Stripe-style envelope so existing tooling can be reused.
+Quidkey sends a Stripe-style envelope so existing tooling can be reused. The example below is the **default webhook** payload. Deliveries to a **named endpoint** use a reduced payload: `payment_token` and `bank_name` are omitted, leaving only `order_id` in `metadata`.
 
 ```json
 {
@@ -114,7 +173,7 @@ Quidkey sends a Stripe-style envelope so existing tooling can be reused.
 | `X-Timestamp` | Unix epoch seconds |
 | `X-Client-Id` | Your `client_id` |
 
-The HMAC is SHA-256 over `"${timestamp}.${raw_body}"`, keyed by your **webhook signing secret**.
+The HMAC is SHA-256 over `"${timestamp}.${raw_body}"`, keyed by your **webhook signing secret**. For a payment routed to a named endpoint, the key is **that endpoint's** secret; an endpoint marked unsigned sends no `X-Signature` header.
 
 ### Verify Signatures
 
@@ -197,7 +256,7 @@ app.post('/webhooks/quidkey', (req, res) => {
 ```
 
 <Info>
-**Retry behavior:** Quidkey retries for up to **3 days** with exponential backoff until your endpoint returns any `2xx` status. Events may be delivered out of order or duplicated, so de-duplicate using the top-level `id` field.
+**Delivery and recovery:** Each event is delivered with a single attempt (15-second timeout). There is **no automatic retry** today: a failed delivery is recorded and can be **manually resent by Quidkey** on request. Reconcile important payments against the API as a backstop, and de-duplicate using the top-level `id` field (a resend reuses it). Durable automatic retries are planned.
 </Info>
 
 ## Fee Handling
@@ -250,7 +309,7 @@ Each fee in the `fees_breakdown` array contains:
 
 <Accordion title="Webhooks & Fees">
 - [ ] Verify webhook signature validation works
-- [ ] Test webhook retry and idempotency handling
+- [ ] De-duplicate events by `id` and confirm your recovery path (manual resend) for failed deliveries
 - [ ] Verify successful payments include fee information
 - [ ] Ensure your system correctly stores fee breakdown data
 </Accordion>
